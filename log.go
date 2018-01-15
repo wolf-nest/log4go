@@ -29,7 +29,9 @@ type LogWriter interface {
 }
 
 type Logger struct {
-	writers map[string]LogWriter
+	writers     map[string]LogWriter
+	enableStack bool
+	stackLevel  int
 }
 
 func NewLogger() *Logger {
@@ -39,10 +41,6 @@ func NewLogger() *Logger {
 }
 
 func (this *Logger) Write(level int, msg string) {
-	//if !this.enableLogger {
-	//	return
-	//}
-
 	var callDepth = 2
 	if this == defaultLogger {
 		callDepth = 3
@@ -56,27 +54,18 @@ func (this *Logger) Write(level int, msg string) {
 		_, file = path.Split(file)
 	}
 
-	var levelShortName = k_LOG_LEVEL_SHORT_NAMES[level]
+	var prefix = k_LOG_LEVEL_SHORT_NAMES[level]
 
-	//if this.enableStack && level >= this.stackLevel {
-	//	message += "\n"
-	//	buf := make([]byte, 1024*1024)
-	//	n := runtime.Stack(buf, true)
-	//	message += string(buf[:n])
-	//	message += "\n"
-	//}
-
-	for _, writer := range this.writers {
-		writer.Write(level, file, line, levelShortName, msg)
+	if this.enableStack && level >= this.stackLevel {
+		buf := make([]byte, 1024*1024)
+		n := runtime.Stack(buf, true)
+		msg += string(buf[:n])
+		msg += "\n"
 	}
 
-	//var msg = messagePool.Get().(*logMessage)
-	//msg.level = level
-	//msg.file = file
-	//msg.line = line
-	//msg.levelShortName = levelShortName
-	//msg.message = message
-	//this.messageChan <- msg
+	for _, writer := range this.writers {
+		writer.Write(level, file, line, prefix, msg)
+	}
 }
 
 func (this *Logger) AddWriter(name string, w LogWriter) {
@@ -84,6 +73,10 @@ func (this *Logger) AddWriter(name string, w LogWriter) {
 }
 
 func (this *Logger) RemoveWriter(name string) {
+	var w = this.writers[name]
+	if w != nil {
+		w.Close()
+	}
 	delete(this.writers, name)
 }
 

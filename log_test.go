@@ -6,10 +6,9 @@ import (
 
 func TestLogger_Write(t *testing.T) {
 	var log = NewLogger()
-
 	log.AddWriter("test", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
 	log.Debugln("new logger debug", 1)
-	log.Debugf("new logger debug fmt %d", 10)
+	log.Debugf("new logger debug fmt %d \n", 10)
 	log.Infoln("new logger info", 1)
 	log.Infof("new logger info fmt %d", 10)
 	log.Warnln("new logger warn", 1)
