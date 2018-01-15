@@ -15,7 +15,7 @@ import (
 //36 cyan		蓝绿色
 //37 white		白色
 
-//LevelDebug = "Debug"		绿色		32
+//LevelDebug = "Debug"		绿色  	32
 //LevelInfo  = "Info"		蓝色  	34
 //LevelWarn  = "Warn"    	黄色  	33
 //LevelFatal = "Fatal"   	洋红  	35
