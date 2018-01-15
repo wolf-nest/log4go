@@ -11,7 +11,7 @@ import (
 //32 green		绿色
 //33 yellow		黄色
 //34 blue		蓝色
-//35 magenta	洋红
+//35 magenta    洋红
 //36 cyan		蓝绿色
 //37 white		白色
 
