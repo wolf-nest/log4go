@@ -57,15 +57,18 @@ func NewConsoleWriter(level int) *ConsoleWriter {
 	return console
 }
 
-func (this *ConsoleWriter) Write(level int, file string, line int, prefix string, msg string) {
-	if level < this.level {
+func (this *ConsoleWriter) WriteMessage(msg *LogMessage) {
+	if msg == nil {
+		return
+	}
+	if msg.level < this.level {
 		return
 	}
 	if isWindows {
-		this.logger.Printf("%s [%s:%d] %s", prefix, file, line, msg)
+		this.logger.Printf("%s [%s:%d] %s", msg.prefix, msg.file, msg.line, msg.message)
 		return
 	}
-	this.logger.Printf("%s [%s:%d] %s", k_CONSOLE_COLORS[level](prefix), file, line, msg)
+	this.logger.Printf("%s [%s:%d] %s", k_CONSOLE_COLORS[msg.level](msg.prefix), msg.file, msg.line, msg.message)
 }
 
 func (this *ConsoleWriter) Close() {

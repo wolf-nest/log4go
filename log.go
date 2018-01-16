@@ -23,8 +23,16 @@ var k_LOG_LEVEL_SHORT_NAMES = []string{
 	"[P]",
 }
 
+type LogMessage struct {
+	level   int
+	file    string
+	line    int
+	prefix  string
+	message string
+}
+
 type LogWriter interface {
-	Write(level int, file string, line int, prefix string, msg string)
+	WriteMessage(msg *LogMessage)
 	Close()
 }
 
@@ -40,7 +48,7 @@ func NewLogger() *Logger {
 	return l
 }
 
-func (this *Logger) Write(level int, msg string) {
+func (this *Logger) WriteMessage(level int, msg string) {
 	var callDepth = 2
 	if this == defaultLogger {
 		callDepth = 3
@@ -63,8 +71,15 @@ func (this *Logger) Write(level int, msg string) {
 		msg += "\n"
 	}
 
+	var logMsg = &LogMessage{}
+	logMsg.level = level
+	logMsg.file = file
+	logMsg.line = line
+	logMsg.prefix = prefix
+	logMsg.message = msg
+
 	for _, writer := range this.writers {
-		writer.Write(level, file, line, prefix, msg)
+		writer.WriteMessage(logMsg)
 	}
 }
 
@@ -82,56 +97,56 @@ func (this *Logger) RemoveWriter(name string) {
 
 //debug
 func (this *Logger) Debugf(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Debugln(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
 //print
 func (this *Logger) Printf(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Println(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
 //info
 func (this *Logger) Infof(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Infoln(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
 }
 
 //warn
 func (this *Logger) Warnf(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Warnln(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
 //fatal
 func (this *Logger) Fatalf(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Fatalln(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
 }
 
 //panic
 func (this *Logger) Panicf(format string, args ...interface{}) {
-	this.Write(K_LOG_LEVEL_PANIC, fmt.Sprintf(format, args...))
+	this.WriteMessage(K_LOG_LEVEL_PANIC, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Panicln(args ...interface{}) {
-	this.Write(K_LOG_LEVEL_PANIC, fmt.Sprintln(args...))
+	this.WriteMessage(K_LOG_LEVEL_PANIC, fmt.Sprintln(args...))
 }
 
 // --------------------------------------------------------------------------------
