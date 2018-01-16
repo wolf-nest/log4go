@@ -51,7 +51,7 @@ func (this *MailWriter) GetFrom() string {
 	return this.from
 }
 
-func (this *MailWriter) SetToMailList(to ...string) {
+func (this *MailWriter) SetToMail(to ...string) {
 	this.to = to
 }
 
