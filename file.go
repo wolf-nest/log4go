@@ -10,30 +10,30 @@ import (
 )
 
 type FileWriter struct {
-	level     int
-	dir       string
-	filename  string
-	maxSize   int64
-	maxAge    int64
-	size      int64
-	mutex     sync.Mutex
-	file      *os.File
-	cleanChan chan bool
+	level      int
+	dir        string
+	filename   string
+	maxSize    int64
+	maxAge     int64
+	size       int64
+	mutex      sync.Mutex
+	file       *os.File
+	bgTaskChan chan bool
 }
 
 func NewFileWriter(level int, logDir string) *FileWriter {
 	var fw = &FileWriter{}
 	fw.level = level
 	fw.dir = logDir
-	fw.filename = path.Join(logDir, "temp_logs.log")
 	fw.maxSize = 10 * 1024 * 1024
-
+	fw.maxAge = 0
+	fw.filename = path.Join(logDir, "temp_logs.log")
 	if err := os.MkdirAll(fw.dir, 0744); err != nil {
 		return nil
 	}
 
-	fw.cleanChan = make(chan bool, 1)
-	go fw.runClean()
+	fw.bgTaskChan = make(chan bool, 1)
+	go fw.runBgTask()
 
 	return fw
 }
@@ -96,25 +96,28 @@ func (this *FileWriter) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func (this *FileWriter) openOrCreate(writeLen int64) error {
+func (this *FileWriter) openOrCreate(pLen int64) error {
 	this.doClean()
 
-	// 验证log文件信息
+	// 获取log文件信息
 	info, err := os.Stat(this.filename)
 	if os.IsNotExist(err) {
+		// 如果log文件不存在，直接创建新的log文件
 		return this.createFile()
 	}
 	if err != nil {
 		return err
 	}
 
-	if info.Size()+writeLen >= this.maxSize {
+	// 文件存在，但是其文件大小已超出设定的阈值
+	if info.Size()+pLen >= this.maxSize {
 		return this.rotate()
 	}
 
 	// 打开现有的文件
 	file, err := os.OpenFile(this.filename, os.O_APPEND|os.O_WRONLY, 0777)
 	if err != nil {
+		// 如果打开文件出错，则创建新的文件
 		return this.createFile()
 	}
 
@@ -125,15 +128,6 @@ func (this *FileWriter) openOrCreate(writeLen int64) error {
 }
 
 func (this *FileWriter) createFile() error {
-	_, err := os.Stat(this.filename)
-	if err == nil {
-		var now = time.Now()
-		var newName = path.Join(this.dir, fmt.Sprintf("%s_%.9d.log", now.Format("2006_01_02_15_04_05"), now.Nanosecond()))
-		if err := os.Rename(this.filename, newName); err != nil {
-			return err
-		}
-	}
-
 	f, err := os.OpenFile(this.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
 		return err
@@ -143,10 +137,27 @@ func (this *FileWriter) createFile() error {
 	return nil
 }
 
+func (this *FileWriter) renameFile() error {
+	_, err := os.Stat(this.filename)
+	if err == nil {
+		var now = time.Now()
+		var newName = path.Join(this.dir, fmt.Sprintf("%s_%.9d.log", now.Format("2006_01_02_15_04_05"), now.Nanosecond()))
+		if err := os.Rename(this.filename, newName); err != nil {
+			return err
+		}
+	}
+	return err
+}
+
 func (this *FileWriter) rotate() error {
 	if err := this.close(); err != nil {
 		return err
 	}
+
+	if err := this.renameFile(); err != nil {
+		return err
+	}
+
 	if err := this.createFile(); err != nil {
 		return err
 	}
@@ -175,15 +186,15 @@ func (this *FileWriter) cleanLogs() {
 	})
 }
 
-func (this *FileWriter) runClean() {
-	for _ = range this.cleanChan {
-		this.cleanLogs()
+func (this *FileWriter) runBgTask() {
+	for {
+		select {
+		case <- this.bgTaskChan:
+			this.cleanLogs()
+		}
 	}
 }
 
 func (this *FileWriter) doClean() {
-	select {
-	case this.cleanChan <- true:
-	default:
-	}
+	this.bgTaskChan <- true
 }

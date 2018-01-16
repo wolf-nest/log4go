@@ -9,7 +9,7 @@ func TestLogger_Write(t *testing.T) {
 	log.AddWriter("test", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
 	log.AddWriter("file", NewFileWriter(K_LOG_LEVEL_DEBUG, "./logs"))
 
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100000; i++ {
 		log.Debugln("new logger debug", 1)
 		log.Debugf("new logger debug fmt %d \n", 10)
 		log.Infoln("new logger info", 1)
