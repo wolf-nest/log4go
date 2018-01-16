@@ -53,7 +53,7 @@ type ConsoleWriter struct {
 func NewConsoleWriter(level int) *ConsoleWriter {
 	var console = &ConsoleWriter{}
 	console.level = level
-	console.logger = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	console.logger = log.New(os.Stdout, "", 0)
 	return console
 }
 
@@ -65,11 +65,12 @@ func (this *ConsoleWriter) WriteMessage(msg *LogMessage) {
 		return
 	}
 	if isWindows {
-		this.logger.Printf("%s [%s:%d] %s", msg.prefix, msg.file, msg.line, msg.message)
+		this.logger.Printf("%s %s [%s:%d] %s", msg.header, msg.levelName, msg.file, msg.line, msg.message)
 		return
 	}
-	this.logger.Printf("%s [%s:%d] %s", k_CONSOLE_COLORS[msg.level](msg.prefix), msg.file, msg.line, msg.message)
+	this.logger.Printf("%s %s [%s:%d] %s", msg.header, k_CONSOLE_COLORS[msg.level](msg.levelName), msg.file, msg.line, msg.message)
 }
 
-func (this *ConsoleWriter) Close() {
+func (this *ConsoleWriter) Close() error {
+	return nil
 }

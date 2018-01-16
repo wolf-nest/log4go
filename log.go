@@ -5,6 +5,7 @@ import (
 	"path"
 	"runtime"
 	"sync"
+	"time"
 )
 
 const (
@@ -24,16 +25,18 @@ var k_LOG_LEVEL_SHORT_NAMES = []string{
 }
 
 type LogMessage struct {
-	level   int
-	file    string
-	line    int
-	prefix  string
-	message string
+	level     int
+	file      string
+	line      int
+	header    string
+	levelName string
+	message   string
+	created   time.Time
 }
 
 type LogWriter interface {
 	WriteMessage(msg *LogMessage)
-	Close()
+	Close() error
 }
 
 type Logger struct {
@@ -72,11 +75,16 @@ func (this *Logger) WriteMessage(level int, msg string) {
 	}
 
 	var logMsg = &LogMessage{}
+	logMsg.created = time.Now()
 	logMsg.level = level
 	logMsg.file = file
 	logMsg.line = line
-	logMsg.prefix = prefix
+	logMsg.levelName = prefix
 	logMsg.message = msg
+
+	month, day, year := logMsg.created.Month(), logMsg.created.Day(), logMsg.created.Year()
+	hour, minute, second := logMsg.created.Hour(), logMsg.created.Minute(), logMsg.created.Second()
+	logMsg.header = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
 
 	for _, writer := range this.writers {
 		writer.WriteMessage(logMsg)
