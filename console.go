@@ -1,9 +1,12 @@
 package log4go
 
 import (
-	"log"
+	"bytes"
+	"io"
 	"os"
 	"runtime"
+	"strconv"
+	"sync"
 )
 
 //30 black		黑色
@@ -46,14 +49,15 @@ func init() {
 }
 
 type ConsoleWriter struct {
-	logger *log.Logger
-	level  int
+	level int
+	out   io.Writer
+	mutex sync.Mutex
 }
 
 func NewConsoleWriter(level int) *ConsoleWriter {
 	var console = &ConsoleWriter{}
 	console.level = level
-	console.logger = log.New(os.Stdout, "", 0)
+	console.out = os.Stdout
 	return console
 }
 
@@ -64,11 +68,29 @@ func (this *ConsoleWriter) WriteMessage(msg *LogMessage) {
 	if msg.level < this.level {
 		return
 	}
+
+	var buf bytes.Buffer
+	buf.WriteString(msg.header)
+	buf.WriteString(" ")
 	if isWindows {
-		this.logger.Printf("%s %s [%s:%d] %s", msg.header, msg.levelName, msg.file, msg.line, msg.message)
-		return
+		buf.WriteString(msg.levelName)
+	} else {
+		buf.WriteString(k_CONSOLE_COLORS[msg.level](msg.levelName))
 	}
-	this.logger.Printf("%s %s [%s:%d] %s", msg.header, k_CONSOLE_COLORS[msg.level](msg.levelName), msg.file, msg.line, msg.message)
+	buf.WriteString(" [")
+	buf.WriteString(msg.file)
+	buf.WriteString(":")
+	buf.WriteString(strconv.Itoa(msg.line))
+	buf.WriteString("] ")
+	buf.WriteString(msg.message)
+
+	this.Write(buf.Bytes())
+}
+
+func (this *ConsoleWriter) Write(p []byte) (n int, err error) {
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
+	return this.out.Write(p)
 }
 
 func (this *ConsoleWriter) Close() error {

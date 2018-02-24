@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"bytes"
+	"strconv"
 )
 
 const (
@@ -58,8 +60,18 @@ func (this *FileWriter) WriteMessage(msg *LogMessage) {
 	if msg.level < this.level {
 		return
 	}
-	var out = fmt.Sprintf("%s %s [%s:%d] %s", msg.header, msg.levelName, msg.file, msg.line, msg.message)
-	this.Write([]byte(out))
+
+	var buf bytes.Buffer
+	buf.WriteString(msg.header)
+	buf.WriteString(" ")
+	buf.WriteString(msg.levelName)
+	buf.WriteString(" [")
+	buf.WriteString(msg.file)
+	buf.WriteString(":")
+	buf.WriteString(strconv.Itoa(msg.line))
+	buf.WriteString("] ")
+	buf.WriteString(msg.message)
+	this.Write(buf.Bytes())
 }
 
 func (this *FileWriter) Close() error {
