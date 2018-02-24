@@ -1,9 +1,11 @@
 package log4go
 
 import (
+	"bytes"
 	"fmt"
 	"path"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -32,6 +34,27 @@ type LogMessage struct {
 	levelName string
 	message   string
 	created   time.Time
+
+	bytes []byte
+}
+
+func (this *LogMessage) Bytes() []byte {
+	if len(this.bytes) != 0 {
+		return this.bytes
+	}
+	var buf bytes.Buffer
+	buf.WriteString(this.header)
+	buf.WriteString(" ")
+	buf.WriteString(this.levelName)
+	buf.WriteString(" [")
+	buf.WriteString(this.file)
+	buf.WriteString(":")
+	buf.WriteString(strconv.Itoa(this.line))
+	buf.WriteString("] ")
+	buf.WriteString(this.message)
+	this.bytes = buf.Bytes()
+
+	return this.bytes
 }
 
 type LogWriter interface {

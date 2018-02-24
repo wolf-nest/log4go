@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
-	"bytes"
-	"strconv"
 )
 
 const (
@@ -61,17 +59,7 @@ func (this *FileWriter) WriteMessage(msg *LogMessage) {
 		return
 	}
 
-	var buf bytes.Buffer
-	buf.WriteString(msg.header)
-	buf.WriteString(" ")
-	buf.WriteString(msg.levelName)
-	buf.WriteString(" [")
-	buf.WriteString(msg.file)
-	buf.WriteString(":")
-	buf.WriteString(strconv.Itoa(msg.line))
-	buf.WriteString("] ")
-	buf.WriteString(msg.message)
-	this.Write(buf.Bytes())
+	this.Write(msg.Bytes())
 }
 
 func (this *FileWriter) Close() error {

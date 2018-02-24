@@ -1,7 +1,7 @@
 package log4go
 
 import (
-	"fmt"
+	"errors"
 	"github.com/smartwalle/mail4go"
 )
 
@@ -67,28 +67,31 @@ func (this *MailWriter) WriteMessage(msg *LogMessage) {
 		return
 	}
 
+	this.Write(msg.Bytes())
+}
+
+func (this *MailWriter) Write(p []byte) (n int, err error) {
 	if this.config == nil {
-		return
+		return -1, errors.New("邮件配置信息为空")
 	}
 
 	if len(this.to) == 0 {
-		return
+		return -1, errors.New("收件人信息不能为空")
 	}
-
-	var out = fmt.Sprintf("%s %s [%s:%d] %s", msg.header, msg.levelName, msg.file, msg.line, msg.message)
 
 	var subject = this.GetSubject()
 	if len(subject) == 0 {
-		subject = msg.file
+		subject = "Log4go"
 	}
 
-	var mail = mail4go.NewTextMessage(subject, out)
+	var mail = mail4go.NewTextMessage(subject, string(p))
 	mail.To = this.to
 	if len(this.from) > 0 {
 		mail.From = this.from
 	}
 
-	mail4go.SendMail(this.config, mail)
+	err = mail4go.SendMail(this.config, mail)
+	return 0, err
 }
 
 func (this *MailWriter) Close() error {

@@ -69,22 +69,21 @@ func (this *ConsoleWriter) WriteMessage(msg *LogMessage) {
 		return
 	}
 
-	var buf bytes.Buffer
-	buf.WriteString(msg.header)
-	buf.WriteString(" ")
 	if isWindows {
-		buf.WriteString(msg.levelName)
+		this.Write(msg.Bytes())
 	} else {
+		var buf bytes.Buffer
+		buf.WriteString(msg.header)
+		buf.WriteString(" ")
 		buf.WriteString(k_CONSOLE_COLORS[msg.level](msg.levelName))
+		buf.WriteString(" [")
+		buf.WriteString(msg.file)
+		buf.WriteString(":")
+		buf.WriteString(strconv.Itoa(msg.line))
+		buf.WriteString("] ")
+		buf.WriteString(msg.message)
+		this.Write(buf.Bytes())
 	}
-	buf.WriteString(" [")
-	buf.WriteString(msg.file)
-	buf.WriteString(":")
-	buf.WriteString(strconv.Itoa(msg.line))
-	buf.WriteString("] ")
-	buf.WriteString(msg.message)
-
-	this.Write(buf.Bytes())
 }
 
 func (this *ConsoleWriter) Write(p []byte) (n int, err error) {
