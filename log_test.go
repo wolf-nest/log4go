@@ -7,7 +7,9 @@ import (
 func TestLogger_Write(t *testing.T) {
 	var log = NewLogger()
 	log.AddWriter("test", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
-	log.AddWriter("file", NewFileWriter(K_LOG_LEVEL_DEBUG, "./logs"))
+
+	var file = NewFileWriter(K_LOG_LEVEL_DEBUG, "./logs")
+	log.AddWriter("file", file)
 
 	for i := 0; i < 100000; i++ {
 		log.Debugln("new logger debug", 1)
