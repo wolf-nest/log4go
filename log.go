@@ -184,11 +184,14 @@ func (this *Logger) Panicln(args ...interface{}) {
 var defaultLogger *Logger
 var once sync.Once
 
-func SharedLogger() *Logger {
+func init() {
 	once.Do(func() {
 		defaultLogger = NewLogger()
 		defaultLogger.AddWriter("default_console", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
 	})
+}
+
+func SharedLogger() *Logger {
 	return defaultLogger
 }
 
