@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	k_DEFAULT_LOG_FILE = "temp_logs.log"
+	k_DEFAULT_LOG_FILE = "temp_log.log"
 	k_LOG_FILE_EXT     = ".log"
 )
 

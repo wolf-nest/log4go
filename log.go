@@ -191,54 +191,54 @@ func init() {
 	})
 }
 
-func SharedLogger() *Logger {
+func DefaultLogger() *Logger {
 	return defaultLogger
 }
 
 func Debugf(format string, args ...interface{}) {
-	SharedLogger().Debugf(format, args...)
+	defaultLogger.Debugf(format, args...)
 }
 
 func Debugln(args ...interface{}) {
-	SharedLogger().Debugln(args...)
+	defaultLogger.Debugln(args...)
 }
 
 func Printf(format string, args ...interface{}) {
-	SharedLogger().Printf(format, args...)
+	defaultLogger.Printf(format, args...)
 }
 
 func Println(args ...interface{}) {
-	SharedLogger().Println(args...)
+	defaultLogger.Println(args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	SharedLogger().Infof(format, args...)
+	defaultLogger.Infof(format, args...)
 }
 
 func Infoln(args ...interface{}) {
-	SharedLogger().Infoln(args...)
+	defaultLogger.Infoln(args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	SharedLogger().Warnf(format, args...)
+	defaultLogger.Warnf(format, args...)
 }
 
 func Warnln(args ...interface{}) {
-	SharedLogger().Warnln(args...)
+	defaultLogger.Warnln(args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	SharedLogger().Panicf(format, args...)
+	defaultLogger.Panicf(format, args...)
 }
 
 func Panicln(args ...interface{}) {
-	SharedLogger().Panicln(args...)
+	defaultLogger.Panicln(args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	SharedLogger().Fatalf(format, args...)
+	defaultLogger.Fatalf(format, args...)
 }
 
 func Fatalln(args ...interface{}) {
-	SharedLogger().Fatalln(args...)
+	defaultLogger.Fatalln(args...)
 }

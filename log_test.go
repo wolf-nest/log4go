@@ -7,8 +7,8 @@ import (
 
 func TestMain(m *testing.M) {
 	var file = NewFileWriter(K_LOG_LEVEL_DEBUG, "./logs")
-	SharedLogger().AddWriter("file", file)
-	SharedLogger().RemoveWriter("default_console")
+	DefaultLogger().AddWriter("file", file)
+	DefaultLogger().RemoveWriter("default_console")
 	os.Exit(m.Run())
 }
 
