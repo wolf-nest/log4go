@@ -90,7 +90,7 @@ func (this *MailWriter) Write(p []byte) (n int, err error) {
 		mail.From = this.from
 	}
 
-	err = mail4go.SendMail(this.config, mail)
+	err = mail4go.SendWithConfig(this.config, mail)
 	return 0, err
 }
 
