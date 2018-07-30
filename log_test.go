@@ -8,6 +8,7 @@ import (
 func TestMain(m *testing.M) {
 	var file = NewFileWriter(K_LOG_LEVEL_DEBUG, "./logs")
 	DefaultLogger().AddWriter("file", file)
+	DefaultLogger().EnableStack()
 	os.Exit(m.Run())
 }
 

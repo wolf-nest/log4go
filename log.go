@@ -118,20 +118,42 @@ type LogWriter interface {
 }
 
 type Logger struct {
-	writers     map[string]LogWriter
-	enableStack bool
-	stackLevel  int
+	writers    map[string]LogWriter
+	printStack bool
+	stackLevel int
 }
 
 func NewLogger() *Logger {
 	var l = &Logger{}
 	l.writers = make(map[string]LogWriter)
+	l.stackLevel = K_LOG_LEVEL_WARNING
+	l.printStack = false
 	return l
+}
+
+func (this *Logger) SetStackLevel(level int) {
+	this.stackLevel = level
+}
+
+func (this *Logger) GetStackLevel() int {
+	return this.stackLevel
+}
+
+func (this *Logger) EnableStack() {
+	this.printStack = true
+}
+
+func (this *Logger) DisableStack() {
+	this.printStack = false
+}
+
+func (this *Logger) PrintStack() bool {
+	return this.printStack
 }
 
 func (this *Logger) WriteMessage(level int, msg string) {
 	var callDepth = 2
-	if this == defaultLogger {
+	if this == Default {
 		callDepth = 3
 	}
 
@@ -145,7 +167,7 @@ func (this *Logger) WriteMessage(level int, msg string) {
 
 	var prefix = k_LOG_LEVEL_SHORT_NAMES[level]
 
-	if this.enableStack && level >= this.stackLevel {
+	if this.printStack && level >= this.stackLevel {
 		buf := make([]byte, 1024*1024)
 		n := runtime.Stack(buf, true)
 		msg += string(buf[:n])
@@ -206,7 +228,6 @@ func (this *Logger) Warnf(format string, args ...interface{}) {
 }
 
 func (this *Logger) Warnln(args ...interface{}) {
-
 	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
@@ -229,64 +250,64 @@ func (this *Logger) Panicln(args ...interface{}) {
 }
 
 // --------------------------------------------------------------------------------
-var defaultLogger *Logger
+var Default *Logger
 var once sync.Once
 
 func init() {
 	once.Do(func() {
-		defaultLogger = NewLogger()
-		defaultLogger.AddWriter("default_console", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
+		Default = NewLogger()
+		Default.AddWriter("default_console", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
 	})
 }
 
 func DefaultLogger() *Logger {
-	return defaultLogger
+	return Default
 }
 
 func Debugf(format string, args ...interface{}) {
-	defaultLogger.Debugf(format, args...)
+	Default.Debugf(format, args...)
 }
 
 func Debugln(args ...interface{}) {
-	defaultLogger.Debugln(args...)
+	Default.Debugln(args...)
 }
 
 func Printf(format string, args ...interface{}) {
-	defaultLogger.Printf(format, args...)
+	Default.Printf(format, args...)
 }
 
 func Println(args ...interface{}) {
-	defaultLogger.Println(args...)
+	Default.Println(args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	defaultLogger.Infof(format, args...)
+	Default.Infof(format, args...)
 }
 
 func Infoln(args ...interface{}) {
-	defaultLogger.Infoln(args...)
+	Default.Infoln(args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	defaultLogger.Warnf(format, args...)
+	Default.Warnf(format, args...)
 }
 
 func Warnln(args ...interface{}) {
-	defaultLogger.Warnln(args...)
+	Default.Warnln(args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	defaultLogger.Panicf(format, args...)
+	Default.Panicf(format, args...)
 }
 
 func Panicln(args ...interface{}) {
-	defaultLogger.Panicln(args...)
+	Default.Panicln(args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	defaultLogger.Fatalf(format, args...)
+	Default.Fatalf(format, args...)
 }
 
 func Fatalln(args ...interface{}) {
-	defaultLogger.Fatalln(args...)
+	Default.Fatalln(args...)
 }
