@@ -19,6 +19,10 @@ func NewMailWriter(level int) *MailWriter {
 	return writer
 }
 
+func (this *MailWriter) Level() int {
+	return this.level
+}
+
 func (this *MailWriter) SetLevel(level int) {
 	this.level = level
 }
@@ -63,11 +67,7 @@ func (this *MailWriter) WriteMessage(msg *LogMessage) {
 	if msg == nil {
 		return
 	}
-	if msg.level < this.level {
-		return
-	}
-
-	this.Write(msg.Bytes())
+	this.Write(msg.Bytes(false))
 }
 
 func (this *MailWriter) Write(p []byte) (n int, err error) {

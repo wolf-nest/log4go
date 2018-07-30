@@ -18,12 +18,53 @@ const (
 	K_LOG_LEVEL_PANIC          //= "Panic"
 )
 
+var NewLine = []byte("\n")
+
 var k_LOG_LEVEL_SHORT_NAMES = []string{
 	"[D]",
 	"[I]",
 	"[W]",
 	"[F]",
 	"[P]",
+}
+
+//30 black		黑色
+//31 red		红色
+//32 green		绿色
+//33 yellow		黄色
+//34 blue		蓝色
+//35 magenta    洋红
+//36 cyan		蓝绿色
+//37 white		白色
+
+//LevelDebug = "Debug"		绿色  	32
+//LevelInfo  = "Info"		蓝色  	34
+//LevelWarn  = "Warn"    	黄色  	33
+//LevelFatal = "Fatal"   	洋红  	35
+//LevelPanic = "Panic"   	红色  	31
+
+type color func(string) string
+
+func newColor(c string) color {
+	return func(t string) string {
+		return "\033[1;" + c + "m" + t + "\033[0m"
+	}
+}
+
+var k_CONSOLE_COLORS = []color{
+	newColor("32"),
+	newColor("34"),
+	newColor("33"),
+	newColor("35"),
+	newColor("31"),
+}
+
+var isWindows bool
+
+func init() {
+	if runtime.GOOS == "windows" {
+		isWindows = true
+	}
 }
 
 type LogMessage struct {
@@ -38,28 +79,42 @@ type LogMessage struct {
 	bytes []byte
 }
 
-func (this *LogMessage) Bytes() []byte {
-	if len(this.bytes) != 0 {
-		return this.bytes
-	}
+func newMessage(level int, file string, line int, prefix, msg string) *LogMessage {
+	var m = &LogMessage{}
+	m.created = time.Now()
+	m.level = level
+	m.file = file
+	m.line = line
+	m.levelName = prefix
+	m.message = msg
+	month, day, year := m.created.Month(), m.created.Day(), m.created.Year()
+	hour, minute, second := m.created.Hour(), m.created.Minute(), m.created.Second()
+	m.header = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+	return m
+}
+
+func (this *LogMessage) Bytes(c bool) []byte {
 	var buf bytes.Buffer
 	buf.WriteString(this.header)
 	buf.WriteString(" ")
-	buf.WriteString(this.levelName)
+	if c && isWindows == false {
+		buf.WriteString(k_CONSOLE_COLORS[this.level](this.levelName))
+	} else {
+		buf.WriteString(this.levelName)
+	}
 	buf.WriteString(" [")
 	buf.WriteString(this.file)
 	buf.WriteString(":")
 	buf.WriteString(strconv.Itoa(this.line))
 	buf.WriteString("] ")
 	buf.WriteString(this.message)
-	this.bytes = buf.Bytes()
-
-	return this.bytes
+	return buf.Bytes()
 }
 
 type LogWriter interface {
 	WriteMessage(msg *LogMessage)
 	Close() error
+	Level() int
 }
 
 type Logger struct {
@@ -97,20 +152,12 @@ func (this *Logger) WriteMessage(level int, msg string) {
 		msg += "\n"
 	}
 
-	var logMsg = &LogMessage{}
-	logMsg.created = time.Now()
-	logMsg.level = level
-	logMsg.file = file
-	logMsg.line = line
-	logMsg.levelName = prefix
-	logMsg.message = msg
-
-	month, day, year := logMsg.created.Month(), logMsg.created.Day(), logMsg.created.Year()
-	hour, minute, second := logMsg.created.Hour(), logMsg.created.Minute(), logMsg.created.Second()
-	logMsg.header = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+	var logMsg = newMessage(level, file, line, prefix, msg)
 
 	for _, writer := range this.writers {
-		writer.WriteMessage(logMsg)
+		if writer.Level() <= logMsg.level {
+			writer.WriteMessage(logMsg)
+		}
 	}
 }
 
@@ -159,6 +206,7 @@ func (this *Logger) Warnf(format string, args ...interface{}) {
 }
 
 func (this *Logger) Warnln(args ...interface{}) {
+
 	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 

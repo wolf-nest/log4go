@@ -43,6 +43,10 @@ func NewFileWriter(level int, logDir string) *FileWriter {
 	return fw
 }
 
+func (this *FileWriter) Level() int {
+	return this.level
+}
+
 func (this *FileWriter) SetMaxSize(mb int) {
 	this.maxSize = int64(mb) * 1024 * 1024
 }
@@ -55,11 +59,7 @@ func (this *FileWriter) WriteMessage(msg *LogMessage) {
 	if msg == nil {
 		return
 	}
-	if msg.level < this.level {
-		return
-	}
-
-	this.Write(msg.Bytes())
+	this.Write(msg.Bytes(false))
 }
 
 func (this *FileWriter) Close() error {
