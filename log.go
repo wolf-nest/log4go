@@ -168,8 +168,8 @@ func (this *Logger) WriteMessage(level int, msg string) {
 	var prefix = k_LOG_LEVEL_SHORT_NAMES[level]
 
 	if this.printStack && level >= this.stackLevel {
-		buf := make([]byte, 1024*1024)
-		n := runtime.Stack(buf, true)
+		var buf [4096]byte
+		n := runtime.Stack(buf[:], true)
 		msg += string(buf[:n])
 		msg += "\n"
 	}
