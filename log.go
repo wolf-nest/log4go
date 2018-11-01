@@ -3,7 +3,6 @@ package log4go
 import (
 	"bytes"
 	"fmt"
-	"path"
 	"runtime"
 	"strconv"
 	"sync"
@@ -161,8 +160,6 @@ func (this *Logger) WriteMessage(level int, msg string) {
 	if !ok {
 		file = "???"
 		line = -1
-	} else {
-		_, file = path.Split(file)
 	}
 
 	var prefix = k_LOG_LEVEL_SHORT_NAMES[level]
