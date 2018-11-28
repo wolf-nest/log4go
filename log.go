@@ -3,6 +3,7 @@ package log4go
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -13,8 +14,8 @@ const (
 	K_LOG_LEVEL_DEBUG   = iota //= "Debug"
 	K_LOG_LEVEL_INFO           //= "Info"
 	K_LOG_LEVEL_WARNING        //= "Warning"
-	K_LOG_LEVEL_FATAL          //= "Fatal"
 	K_LOG_LEVEL_PANIC          //= "Panic"
+	K_LOG_LEVEL_FATAL          //= "Fatal"
 )
 
 //30 black		黑色
@@ -57,8 +58,8 @@ var (
 		"[D]",
 		"[I]",
 		"[W]",
-		"[F]",
 		"[P]",
+		"[F]",
 	}
 
 	levelWithColors = []string{
@@ -87,7 +88,7 @@ type Logger struct {
 func NewLogger() *Logger {
 	var l = &Logger{}
 	l.writers = make(map[string]Writer)
-	l.stackLevel = K_LOG_LEVEL_WARNING
+	l.stackLevel = K_LOG_LEVEL_PANIC
 	l.printStack = false
 	l.printPath = true
 	l.printColor = true
@@ -224,15 +225,6 @@ func (this *Logger) Warnln(args ...interface{}) {
 	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
-//fatal
-func (this *Logger) Fatalf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
-}
-
-func (this *Logger) Fatalln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
-}
-
 //panic
 func (this *Logger) Panicf(format string, args ...interface{}) {
 	var msg = fmt.Sprintf(format, args...)
@@ -244,6 +236,17 @@ func (this *Logger) Panicln(args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
 	this.WriteMessage(K_LOG_LEVEL_PANIC, msg)
 	panic(msg)
+}
+
+//fatal
+func (this *Logger) Fatalf(format string, args ...interface{}) {
+	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
+	os.Exit(-1)
+}
+
+func (this *Logger) Fatalln(args ...interface{}) {
+	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
+	os.Exit(-1)
 }
 
 // --------------------------------------------------------------------------------

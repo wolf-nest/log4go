@@ -19,10 +19,10 @@ func TestLogger_Write(t *testing.T) {
 	Infof("default logger info fmt %d \n", 10)
 	Warnln("default logger warn", 1)
 	Warnf("default logger warn fmt %d \n", 1)
-	Fatalln("default logger fatal", 1)
-	Fatalf("default logger fatal fmt %d \n", 1)
 	Panicln("default logger panic", 1)
 	Panicf("default logger panic fmt %d \n", 1)
+	Fatalln("default logger fatal", 1)
+	Fatalf("default logger fatal fmt %d \n", 1)
 }
 
 func BenchmarkPrintln(b *testing.B) {
