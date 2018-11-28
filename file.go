@@ -90,12 +90,13 @@ func (this *FileWriter) Close() error {
 }
 
 func (this *FileWriter) close() error {
-	if this.file == nil {
-		return nil
+	var err error
+	if this.file != nil {
+		err = this.file.Close()
 	}
-	err := this.file.Close()
 	this.file = nil
 	this.size = 0
+	close(this.bgTaskChan)
 	return err
 }
 
@@ -196,7 +197,10 @@ func (this *FileWriter) cleanLogs() {
 func (this *FileWriter) runBgTask() {
 	for {
 		select {
-		case <-this.bgTaskChan:
+		case _, ok := <-this.bgTaskChan:
+			if !ok {
+				return
+			}
 			this.cleanLogs()
 		}
 	}
