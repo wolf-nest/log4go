@@ -141,7 +141,7 @@ func (this *Logger) PrintColor() bool {
 
 func (this *Logger) WriteMessage(level int, msg string) {
 	var callDepth = 2
-	if this == Default {
+	if this == defaultLogger {
 		callDepth = 3
 	}
 
@@ -250,64 +250,76 @@ func (this *Logger) Fatalln(args ...interface{}) {
 }
 
 // --------------------------------------------------------------------------------
-var Default *Logger
+var defaultLogger *Logger
 var once sync.Once
 
 func init() {
 	once.Do(func() {
-		Default = NewLogger()
-		Default.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
+		defaultLogger = NewLogger()
+		defaultLogger.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
 	})
 }
 
 func DefaultLogger() *Logger {
-	return Default
+	return defaultLogger
+}
+
+func SharedLogger() *Logger {
+	return defaultLogger
+}
+
+func AddWriter(name string, w Writer) {
+	defaultLogger.AddWriter(name, w)
+}
+
+func RemoveWriter(name string) {
+	defaultLogger.RemoveWriter(name)
 }
 
 func Debugf(format string, args ...interface{}) {
-	Default.Debugf(format, args...)
+	defaultLogger.Debugf(format, args...)
 }
 
 func Debugln(args ...interface{}) {
-	Default.Debugln(args...)
+	defaultLogger.Debugln(args...)
 }
 
 func Printf(format string, args ...interface{}) {
-	Default.Printf(format, args...)
+	defaultLogger.Printf(format, args...)
 }
 
 func Println(args ...interface{}) {
-	Default.Println(args...)
+	defaultLogger.Println(args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	Default.Infof(format, args...)
+	defaultLogger.Infof(format, args...)
 }
 
 func Infoln(args ...interface{}) {
-	Default.Infoln(args...)
+	defaultLogger.Infoln(args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	Default.Warnf(format, args...)
+	defaultLogger.Warnf(format, args...)
 }
 
 func Warnln(args ...interface{}) {
-	Default.Warnln(args...)
+	defaultLogger.Warnln(args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	Default.Panicf(format, args...)
+	defaultLogger.Panicf(format, args...)
 }
 
 func Panicln(args ...interface{}) {
-	Default.Panicln(args...)
+	defaultLogger.Panicln(args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	Default.Fatalf(format, args...)
+	defaultLogger.Fatalf(format, args...)
 }
 
 func Fatalln(args ...interface{}) {
-	Default.Fatalln(args...)
+	defaultLogger.Fatalln(args...)
 }
