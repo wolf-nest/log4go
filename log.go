@@ -3,6 +3,7 @@ package log4go
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -79,6 +80,8 @@ type Logger struct {
 	writers    map[string]Writer
 	printStack bool
 	stackLevel int
+	printPath  bool
+	printColor bool
 }
 
 func NewLogger() *Logger {
@@ -86,6 +89,8 @@ func NewLogger() *Logger {
 	l.writers = make(map[string]Writer)
 	l.stackLevel = K_LOG_LEVEL_WARNING
 	l.printStack = false
+	l.printPath = true
+	l.printColor = true
 	return l
 }
 
@@ -109,6 +114,30 @@ func (this *Logger) PrintStack() bool {
 	return this.printStack
 }
 
+func (this *Logger) EnablePath() {
+	this.printPath = true
+}
+
+func (this *Logger) DisablePath() {
+	this.printPath = false
+}
+
+func (this *Logger) PrintPath() bool {
+	return this.printPath
+}
+
+func (this *Logger) EnableColor() {
+	this.printColor = true
+}
+
+func (this *Logger) DisableColor() {
+	this.printColor = false
+}
+
+func (this *Logger) PrintColor() bool {
+	return this.printColor
+}
+
 func (this *Logger) WriteMessage(level int, msg string) {
 	var callDepth = 2
 	if this == Default {
@@ -116,7 +145,11 @@ func (this *Logger) WriteMessage(level int, msg string) {
 	}
 
 	_, file, line, ok := runtime.Caller(callDepth)
-	if !ok {
+	if ok {
+		if this.printPath == false {
+			_, file = filepath.Split(file)
+		}
+	} else {
 		file = "???"
 		line = -1
 	}
@@ -133,7 +166,7 @@ func (this *Logger) WriteMessage(level int, msg string) {
 
 	for _, w := range this.writers {
 		if w.Level() <= level {
-			if w.EnableColor() {
+			if this.printColor && w.EnableColor() {
 				levelName = levelWithColors[level]
 			} else {
 				levelName = levelShortNames[level]
