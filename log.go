@@ -1,10 +1,9 @@
 package log4go
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -16,16 +15,6 @@ const (
 	K_LOG_LEVEL_FATAL          //= "Fatal"
 	K_LOG_LEVEL_PANIC          //= "Panic"
 )
-
-var NewLine = []byte("\n")
-
-var k_LOG_LEVEL_SHORT_NAMES = []string{
-	"[D]",
-	"[I]",
-	"[W]",
-	"[F]",
-	"[P]",
-}
 
 //30 black		黑色
 //31 red		红色
@@ -42,89 +31,59 @@ var k_LOG_LEVEL_SHORT_NAMES = []string{
 //LevelFatal = "Fatal"   	洋红  	35
 //LevelPanic = "Panic"   	红色  	31
 
-type color func(string) string
+func green(c string) string {
+	return fmt.Sprintf("\033[1;32m%s\033[0m", c)
+}
 
-func newColor(c string) color {
-	return func(t string) string {
-		return "\033[1;" + c + "m" + t + "\033[0m"
+func blue(c string) string {
+	return fmt.Sprintf("\033[1;34m%s\033[0m", c)
+}
+
+func yellow(c string) string {
+	return fmt.Sprintf("\033[1;33m%s\033[0m", c)
+}
+
+func magenta(c string) string {
+	return fmt.Sprintf("\033[1;35m%s\033[0m", c)
+}
+
+func red(c string) string {
+	return fmt.Sprintf("\033[1;31m%s\033[0m", c)
+}
+
+var (
+	levelShortNames = []string{
+		"[D]",
+		"[I]",
+		"[W]",
+		"[F]",
+		"[P]",
 	}
-}
 
-var k_CONSOLE_COLORS = []color{
-	newColor("32"),
-	newColor("34"),
-	newColor("33"),
-	newColor("35"),
-	newColor("31"),
-}
-
-var isWindows bool
-
-func init() {
-	if runtime.GOOS == "windows" {
-		isWindows = true
+	levelWithColors = []string{
+		green(levelShortNames[0]),
+		blue(levelShortNames[1]),
+		yellow(levelShortNames[2]),
+		magenta(levelShortNames[3]),
+		red(levelShortNames[4]),
 	}
-}
+)
 
-type LogMessage struct {
-	level     int
-	file      string
-	line      int
-	header    string
-	levelName string
-	message   string
-	created   time.Time
-
-	bytes []byte
-}
-
-func newMessage(level int, file string, line int, prefix, msg string) *LogMessage {
-	var m = &LogMessage{}
-	m.created = time.Now()
-	m.level = level
-	m.file = file
-	m.line = line
-	m.levelName = prefix
-	m.message = msg
-	month, day, year := m.created.Month(), m.created.Day(), m.created.Year()
-	hour, minute, second := m.created.Hour(), m.created.Minute(), m.created.Second()
-	m.header = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
-	return m
-}
-
-func (this *LogMessage) Bytes(c bool) []byte {
-	var buf bytes.Buffer
-	buf.WriteString(this.header)
-	buf.WriteString(" ")
-	if c && isWindows == false {
-		buf.WriteString(k_CONSOLE_COLORS[this.level](this.levelName))
-	} else {
-		buf.WriteString(this.levelName)
-	}
-	buf.WriteString(" [")
-	buf.WriteString(this.file)
-	buf.WriteString(":")
-	buf.WriteString(strconv.Itoa(this.line))
-	buf.WriteString("] ")
-	buf.WriteString(this.message)
-	return buf.Bytes()
-}
-
-type LogWriter interface {
-	WriteMessage(msg *LogMessage)
-	Close() error
+type Writer interface {
+	io.WriteCloser
 	Level() int
+	EnableColor() bool
 }
 
 type Logger struct {
-	writers    map[string]LogWriter
+	writers    map[string]Writer
 	printStack bool
 	stackLevel int
 }
 
 func NewLogger() *Logger {
 	var l = &Logger{}
-	l.writers = make(map[string]LogWriter)
+	l.writers = make(map[string]Writer)
 	l.stackLevel = K_LOG_LEVEL_WARNING
 	l.printStack = false
 	return l
@@ -162,8 +121,6 @@ func (this *Logger) WriteMessage(level int, msg string) {
 		line = -1
 	}
 
-	var prefix = k_LOG_LEVEL_SHORT_NAMES[level]
-
 	if this.printStack && level >= this.stackLevel {
 		var buf [4096]byte
 		n := runtime.Stack(buf[:], true)
@@ -171,16 +128,22 @@ func (this *Logger) WriteMessage(level int, msg string) {
 		msg += "\n"
 	}
 
-	var logMsg = newMessage(level, file, line, prefix, msg)
+	var now = time.Now()
+	var levelName string
 
-	for _, writer := range this.writers {
-		if writer.Level() <= logMsg.level {
-			writer.WriteMessage(logMsg)
+	for _, w := range this.writers {
+		if w.Level() <= level {
+			if w.EnableColor() {
+				levelName = levelWithColors[level]
+			} else {
+				levelName = levelShortNames[level]
+			}
+			fmt.Fprintf(w, "%s %s [%s:%d] %s", now.Format("2006/01/02 15:04:05"), levelName, file, line, msg)
 		}
 	}
 }
 
-func (this *Logger) AddWriter(name string, w LogWriter) {
+func (this *Logger) AddWriter(name string, w Writer) {
 	this.writers[name] = w
 }
 
@@ -239,11 +202,15 @@ func (this *Logger) Fatalln(args ...interface{}) {
 
 //panic
 func (this *Logger) Panicf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_PANIC, fmt.Sprintf(format, args...))
+	var msg = fmt.Sprintf(format, args...)
+	this.WriteMessage(K_LOG_LEVEL_PANIC, msg)
+	panic(msg)
 }
 
 func (this *Logger) Panicln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_PANIC, fmt.Sprintln(args...))
+	var msg = fmt.Sprintln(args...)
+	this.WriteMessage(K_LOG_LEVEL_PANIC, msg)
+	panic(msg)
 }
 
 // --------------------------------------------------------------------------------
@@ -253,7 +220,7 @@ var once sync.Once
 func init() {
 	once.Do(func() {
 		Default = NewLogger()
-		Default.AddWriter("default_console", NewConsoleWriter(K_LOG_LEVEL_DEBUG))
+		Default.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
 	})
 }
 

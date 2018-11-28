@@ -14,9 +14,9 @@ type MailWriter struct {
 }
 
 func NewMailWriter(level int) *MailWriter {
-	var writer = &MailWriter{}
-	writer.level = level
-	return writer
+	var mw = &MailWriter{}
+	mw.level = level
+	return mw
 }
 
 func (this *MailWriter) Level() int {
@@ -63,14 +63,11 @@ func (this *MailWriter) GetToMailList() []string {
 	return this.to
 }
 
-func (this *MailWriter) WriteMessage(msg *LogMessage) {
-	if msg == nil {
-		return
-	}
-	this.Write(msg.Bytes(false))
-}
-
 func (this *MailWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
 	if this.config == nil {
 		return -1, errors.New("邮件配置信息为空")
 	}
@@ -96,4 +93,8 @@ func (this *MailWriter) Write(p []byte) (n int, err error) {
 
 func (this *MailWriter) Close() error {
 	return nil
+}
+
+func (this *MailWriter) EnableColor() bool {
+	return false
 }

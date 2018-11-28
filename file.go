@@ -15,28 +15,29 @@ const (
 )
 
 type FileWriter struct {
-	level      int
-	dir        string
-	filename   string
-	maxSize    int64
-	maxAge     int64
-	size       int64
-	mutex      sync.Mutex
-	file       *os.File
-	bgTaskChan chan bool
+	level       int
+	dir         string
+	filename    string
+	maxSize     int64
+	maxAge      int64
+	size        int64
+	mutex       sync.Mutex
+	file        *os.File
+	enableColor bool
+	bgTaskChan  chan bool
 }
 
-func NewFileWriter(level int, logDir string) *FileWriter {
+func NewFileWriter(level int, dir string) *FileWriter {
 	var fw = &FileWriter{}
 	fw.level = level
-	fw.dir = logDir
+	fw.dir = dir
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
-	fw.filename = path.Join(logDir, k_DEFAULT_LOG_FILE)
+	fw.filename = path.Join(dir, k_DEFAULT_LOG_FILE)
 	if err := os.MkdirAll(fw.dir, 0744); err != nil {
 		return nil
 	}
-
+	fw.enableColor = false
 	fw.bgTaskChan = make(chan bool, 1)
 	go fw.runBgTask()
 
@@ -55,30 +56,11 @@ func (this *FileWriter) SetMaxAge(sec int64) {
 	this.maxAge = sec
 }
 
-func (this *FileWriter) WriteMessage(msg *LogMessage) {
-	if msg == nil {
-		return
-	}
-	this.Write(msg.Bytes(false))
-}
-
-func (this *FileWriter) Close() error {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	return this.close()
-}
-
-func (this *FileWriter) close() error {
-	if this.file == nil {
-		return nil
-	}
-	err := this.file.Close()
-	this.file = nil
-	this.size = 0
-	return err
-}
-
 func (this *FileWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
@@ -99,6 +81,26 @@ func (this *FileWriter) Write(p []byte) (n int, err error) {
 	this.size += int64(n)
 
 	return n, err
+}
+
+func (this *FileWriter) Close() error {
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
+	return this.close()
+}
+
+func (this *FileWriter) close() error {
+	if this.file == nil {
+		return nil
+	}
+	err := this.file.Close()
+	this.file = nil
+	this.size = 0
+	return err
+}
+
+func (this *FileWriter) EnableColor() bool {
+	return false
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
