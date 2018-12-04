@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	k_DEFAULT_LOG_FILE = "temp_log.log"
-	k_LOG_FILE_EXT     = ".log"
+	kDefaultLogFile = "temp_log.log"
+	kLogFileExt     = ".log"
 )
 
 type FileWriter struct {
@@ -33,7 +33,7 @@ func NewFileWriter(level int, dir string) *FileWriter {
 	fw.dir = dir
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
-	fw.filename = path.Join(dir, k_DEFAULT_LOG_FILE)
+	fw.filename = path.Join(dir, kDefaultLogFile)
 	if err := os.MkdirAll(fw.dir, 0744); err != nil {
 		return nil
 	}
@@ -186,7 +186,7 @@ func (this *FileWriter) cleanLogs() {
 		}()
 
 		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-this.maxAge) {
-			if filepath.Ext(info.Name()) == k_LOG_FILE_EXT && info.Name() != k_DEFAULT_LOG_FILE {
+			if filepath.Ext(info.Name()) == kLogFileExt && info.Name() != kDefaultLogFile {
 				rErr = os.Remove(path)
 			}
 		}
