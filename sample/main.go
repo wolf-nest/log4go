@@ -1,6 +1,8 @@
 package main
 
-import "github.com/smartwalle/log4go"
+import (
+	"github.com/smartwalle/log4go"
+)
 
 func main() {
 	log4go.Debugln("debugln")
