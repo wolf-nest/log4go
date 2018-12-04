@@ -269,12 +269,56 @@ func init() {
 	})
 }
 
-func DefaultLogger() *Logger {
-	return defaultLogger
+func SetPrefix(prefix string) {
+	defaultLogger.SetPrefix(prefix)
 }
 
-func SharedLogger() *Logger {
-	return defaultLogger
+func Prefix() string {
+	return defaultLogger.Prefix()
+}
+
+func SetStackLevel(level int) {
+	defaultLogger.stackLevel = level
+}
+
+func GetStackLevel() int {
+	return defaultLogger.stackLevel
+}
+
+func EnableStack() {
+	defaultLogger.printStack = true
+}
+
+func DisableStack() {
+	defaultLogger.printStack = false
+}
+
+func PrintStack() bool {
+	return defaultLogger.printStack
+}
+
+func EnablePath() {
+	defaultLogger.printPath = true
+}
+
+func DisablePath() {
+	defaultLogger.printPath = false
+}
+
+func PrintPath() bool {
+	return defaultLogger.printPath
+}
+
+func EnableColor() {
+	defaultLogger.printColor = true
+}
+
+func DisableColor() {
+	defaultLogger.printColor = false
+}
+
+func PrintColor() bool {
+	return defaultLogger.printColor
 }
 
 func AddWriter(name string, w Writer) {
@@ -283,14 +327,6 @@ func AddWriter(name string, w Writer) {
 
 func RemoveWriter(name string) {
 	defaultLogger.RemoveWriter(name)
-}
-
-func SetPrefix(prefix string) {
-	defaultLogger.SetPrefix(prefix)
-}
-
-func Prefix() string {
-	return defaultLogger.Prefix()
 }
 
 func Debugf(format string, args ...interface{}) {
