@@ -86,6 +86,7 @@ func (this *FileWriter) Write(p []byte) (n int, err error) {
 func (this *FileWriter) Close() error {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
+	close(this.bgTaskChan)
 	return this.close()
 }
 
@@ -96,7 +97,6 @@ func (this *FileWriter) close() error {
 	}
 	this.file = nil
 	this.size = 0
-	close(this.bgTaskChan)
 	return err
 }
 
