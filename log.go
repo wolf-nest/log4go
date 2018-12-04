@@ -79,6 +79,7 @@ type Writer interface {
 
 type Logger struct {
 	writers    map[string]Writer
+	prefix     string
 	printStack bool
 	stackLevel int
 	printPath  bool
@@ -93,6 +94,14 @@ func New() *Logger {
 	l.printPath = true
 	l.printColor = true
 	return l
+}
+
+func (this *Logger) SetPrefix(prefix string) {
+	this.prefix = prefix
+}
+
+func (this *Logger) Prefix() string {
+	return this.prefix
 }
 
 func (this *Logger) SetStackLevel(level int) {
@@ -141,7 +150,7 @@ func (this *Logger) PrintColor() bool {
 
 func (this *Logger) WriteMessage(level int, msg string) {
 	var callDepth = 2
-	if this == sharedInstance {
+	if this == defaultLogger {
 		callDepth = 3
 	}
 
@@ -172,7 +181,7 @@ func (this *Logger) WriteMessage(level int, msg string) {
 			} else {
 				levelName = levelShortNames[level]
 			}
-			fmt.Fprintf(w, "%s %s [%s:%d] %s", now.Format("2006/01/02 15:04:05"), levelName, file, line, msg)
+			fmt.Fprintf(w, "%s%s %s [%s:%d] %s", this.prefix, now.Format("2006/01/02 15:04:05"), levelName, file, line, msg)
 		}
 	}
 }
@@ -250,76 +259,84 @@ func (this *Logger) Fatalln(args ...interface{}) {
 }
 
 // --------------------------------------------------------------------------------
-var sharedInstance *Logger
+var defaultLogger *Logger
 var once sync.Once
 
 func init() {
 	once.Do(func() {
-		sharedInstance = New()
-		sharedInstance.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
+		defaultLogger = New()
+		defaultLogger.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
 	})
 }
 
 func DefaultLogger() *Logger {
-	return sharedInstance
+	return defaultLogger
 }
 
 func SharedLogger() *Logger {
-	return sharedInstance
+	return defaultLogger
 }
 
 func AddWriter(name string, w Writer) {
-	sharedInstance.AddWriter(name, w)
+	defaultLogger.AddWriter(name, w)
 }
 
 func RemoveWriter(name string) {
-	sharedInstance.RemoveWriter(name)
+	defaultLogger.RemoveWriter(name)
+}
+
+func SetPrefix(prefix string) {
+	defaultLogger.SetPrefix(prefix)
+}
+
+func Prefix() string {
+	return defaultLogger.Prefix()
 }
 
 func Debugf(format string, args ...interface{}) {
-	sharedInstance.Debugf(format, args...)
+	defaultLogger.Debugf(format, args...)
 }
 
 func Debugln(args ...interface{}) {
-	sharedInstance.Debugln(args...)
+	defaultLogger.Debugln(args...)
 }
 
 func Printf(format string, args ...interface{}) {
-	sharedInstance.Printf(format, args...)
+	defaultLogger.Printf(format, args...)
 }
 
 func Println(args ...interface{}) {
-	sharedInstance.Println(args...)
+	defaultLogger.Println(args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	sharedInstance.Infof(format, args...)
+	defaultLogger.Infof(format, args...)
 }
 
 func Infoln(args ...interface{}) {
-	sharedInstance.Infoln(args...)
+	defaultLogger.Infoln(args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	sharedInstance.Warnf(format, args...)
+	defaultLogger.Warnf(format, args...)
 }
 
 func Warnln(args ...interface{}) {
-	sharedInstance.Warnln(args...)
+	defaultLogger.Warnln(args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	sharedInstance.Panicf(format, args...)
+	defaultLogger.Panicf(format, args...)
 }
 
 func Panicln(args ...interface{}) {
-	sharedInstance.Panicln(args...)
+	defaultLogger.Panicln(args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	sharedInstance.Fatalf(format, args...)
+	defaultLogger.Fatalf(format, args...)
 }
 
 func Fatalln(args ...interface{}) {
-	sharedInstance.Fatalln(args...)
+	defaultLogger.Fatalln(args...)
 }
