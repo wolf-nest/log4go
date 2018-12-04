@@ -78,6 +78,7 @@ type Writer interface {
 }
 
 type Logger struct {
+	mu         sync.Mutex
 	writers    map[string]Writer
 	prefix     string
 	printStack bool
@@ -97,62 +98,89 @@ func New() *Logger {
 }
 
 func (this *Logger) SetPrefix(prefix string) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.prefix = prefix
 }
 
 func (this *Logger) Prefix() string {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.prefix
 }
 
 func (this *Logger) SetStackLevel(level int) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.stackLevel = level
 }
 
 func (this *Logger) GetStackLevel() int {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.stackLevel
 }
 
 func (this *Logger) EnableStack() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printStack = true
 }
 
 func (this *Logger) DisableStack() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printStack = false
 }
 
 func (this *Logger) PrintStack() bool {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.printStack
 }
 
 func (this *Logger) EnablePath() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printPath = true
 }
 
 func (this *Logger) DisablePath() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printPath = false
 }
 
 func (this *Logger) PrintPath() bool {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.printPath
 }
 
 func (this *Logger) EnableColor() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printColor = true
 }
 
 func (this *Logger) DisableColor() {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.printColor = false
 }
 
 func (this *Logger) PrintColor() bool {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.printColor
 }
 
-func (this *Logger) WriteMessage(level int, msg string) {
-	var callDepth = 2
-	if this == defaultLogger {
-		callDepth = 3
-	}
+func (this *Logger) WriteMessage(callDepth, level int, msg string) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+
+	var file string
+	var line int
 
 	_, file, line, ok := runtime.Caller(callDepth)
 	if ok {
@@ -187,10 +215,14 @@ func (this *Logger) WriteMessage(level int, msg string) {
 }
 
 func (this *Logger) AddWriter(name string, w Writer) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	this.writers[name] = w
 }
 
 func (this *Logger) RemoveWriter(name string) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	var w = this.writers[name]
 	if w != nil {
 		w.Close()
@@ -200,62 +232,67 @@ func (this *Logger) RemoveWriter(name string) {
 
 //debug
 func (this *Logger) Debugf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Debugln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
 //print
 func (this *Logger) Printf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Println(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
 //info
 func (this *Logger) Infof(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
+	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Infoln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
 }
 
 //warn
 func (this *Logger) Warnf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
+	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Warnln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
+	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
 //panic
 func (this *Logger) Panicf(format string, args ...interface{}) {
 	var msg = fmt.Sprintf(format, args...)
-	this.WriteMessage(K_LOG_LEVEL_PANIC, msg)
+	this.WriteMessage(2, K_LOG_LEVEL_PANIC, msg)
 	panic(msg)
 }
 
 func (this *Logger) Panicln(args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	this.WriteMessage(K_LOG_LEVEL_PANIC, msg)
+	this.WriteMessage(2, K_LOG_LEVEL_PANIC, msg)
 	panic(msg)
 }
 
 //fatal
 func (this *Logger) Fatalf(format string, args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
+	this.WriteMessage(2, K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
 	os.Exit(-1)
 }
 
 func (this *Logger) Fatalln(args ...interface{}) {
-	this.WriteMessage(K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
+	this.WriteMessage(2, K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
 	os.Exit(-1)
+}
+
+func (this *Logger) Output(calldepth int, s string) error {
+	this.WriteMessage(calldepth+1, K_LOG_LEVEL_DEBUG, s)
+	return nil
 }
 
 // --------------------------------------------------------------------------------
@@ -265,7 +302,7 @@ var once sync.Once
 func init() {
 	once.Do(func() {
 		defaultLogger = New()
-		defaultLogger.AddWriter("std_out", NewStdWriter(K_LOG_LEVEL_DEBUG))
+		defaultLogger.AddWriter("stdout", NewStdWriter(K_LOG_LEVEL_DEBUG))
 	})
 }
 
@@ -329,50 +366,67 @@ func RemoveWriter(name string) {
 	defaultLogger.RemoveWriter(name)
 }
 
+//debug
 func Debugf(format string, args ...interface{}) {
-	defaultLogger.Debugf(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func Debugln(args ...interface{}) {
-	defaultLogger.Debugln(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
+//print
 func Printf(format string, args ...interface{}) {
-	defaultLogger.Printf(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func Println(args ...interface{}) {
-	defaultLogger.Println(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
+//info
 func Infof(format string, args ...interface{}) {
-	defaultLogger.Infof(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 func Infoln(args ...interface{}) {
-	defaultLogger.Infoln(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
 }
 
+//warn
 func Warnf(format string, args ...interface{}) {
-	defaultLogger.Warnf(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
 }
 
 func Warnln(args ...interface{}) {
-	defaultLogger.Warnln(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
+//panic
 func Panicf(format string, args ...interface{}) {
-	defaultLogger.Panicf(format, args...)
+	var msg = fmt.Sprintf(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_PANIC, msg)
+	panic(msg)
 }
 
 func Panicln(args ...interface{}) {
-	defaultLogger.Panicln(args...)
+	var msg = fmt.Sprintln(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_PANIC, msg)
+	panic(msg)
 }
 
+//fatal
 func Fatalf(format string, args ...interface{}) {
-	defaultLogger.Fatalf(format, args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_FATAL, fmt.Sprintf(format, args...))
+	os.Exit(-1)
 }
 
 func Fatalln(args ...interface{}) {
-	defaultLogger.Fatalln(args...)
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
+	os.Exit(-1)
+}
+
+func Output(calldepth int, s string) error {
+	defaultLogger.WriteMessage(calldepth+1, K_LOG_LEVEL_DEBUG, s)
+	return nil
 }
