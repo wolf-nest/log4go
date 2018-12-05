@@ -9,11 +9,50 @@ import (
 	"time"
 )
 
+// --------------------------------------------------------------------------------
 const (
 	kDefaultLogFile = "temp_log.log"
 	kLogFileExt     = ".log"
 )
 
+type FileWriterOption interface {
+	Apply(*FileWriter)
+}
+
+type fwOptionFunc func(*FileWriter)
+
+func (f fwOptionFunc) Apply(w *FileWriter) {
+	f(w)
+}
+
+func WithMaxAge(sec int64) FileWriterOption {
+	return fwOptionFunc(func(w *FileWriter) {
+		if sec < 0 {
+			return
+		}
+		w.maxAge = sec
+	})
+}
+
+func WithMaxSize(mb int64) FileWriterOption {
+	return fwOptionFunc(func(w *FileWriter) {
+		if mb < 0 {
+			return
+		}
+		w.maxSize = mb * 1024 * 1024
+	})
+}
+
+func WithLogDir(dir string) FileWriterOption {
+	return fwOptionFunc(func(w *FileWriter) {
+		if dir == "" {
+			return
+		}
+		w.dir = dir
+	})
+}
+
+// --------------------------------------------------------------------------------
 type FileWriter struct {
 	level       int
 	dir         string
@@ -27,17 +66,21 @@ type FileWriter struct {
 	enableColor bool
 }
 
-func NewFileWriter(level int, dir string) *FileWriter {
+func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	var fw = &FileWriter{}
 	fw.level = level
-	fw.dir = dir
+	fw.dir = "./logs"
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
-	fw.filename = path.Join(dir, kDefaultLogFile)
 	if err := os.MkdirAll(fw.dir, 0744); err != nil {
 		return nil
 	}
 	fw.enableColor = false
+
+	for _, opt := range opts {
+		opt.Apply(fw)
+	}
+	fw.filename = path.Join(fw.dir, kDefaultLogFile)
 
 	return fw
 }
