@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// --------------------------------------------------------------------------------
 const (
 	K_LOG_LEVEL_DEBUG   = iota //= "Debug"
 	K_LOG_LEVEL_INFO           //= "Info"
@@ -71,6 +72,24 @@ var (
 	}
 )
 
+// --------------------------------------------------------------------------------
+type Option interface {
+	Apply(*Logger)
+}
+
+type optionFunc func(*Logger)
+
+func (f optionFunc) Apply(l *Logger) {
+	f(l)
+}
+
+func WithPrefix(p string) Option {
+	return optionFunc(func(l *Logger) {
+		l.prefix = p
+	})
+}
+
+// --------------------------------------------------------------------------------
 type Writer interface {
 	io.WriteCloser
 	Level() int
@@ -87,13 +106,16 @@ type Logger struct {
 	printColor bool
 }
 
-func New() *Logger {
+func New(opts ...Option) *Logger {
 	var l = &Logger{}
 	l.writers = make(map[string]Writer)
 	l.stackLevel = K_LOG_LEVEL_PANIC
 	l.printStack = false
 	l.printPath = true
 	l.printColor = true
+	for _, opt := range opts {
+		opt.Apply(l)
+	}
 	return l
 }
 
