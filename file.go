@@ -72,13 +72,13 @@ func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	fw.dir = "./logs"
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
-	if err := os.MkdirAll(fw.dir, 0744); err != nil {
-		return nil
-	}
 	fw.enableColor = false
-
 	for _, opt := range opts {
 		opt.Apply(fw)
+	}
+
+	if err := os.MkdirAll(fw.dir, 0744); err != nil {
+		return nil
 	}
 	fw.filename = path.Join(fw.dir, kDefaultLogFile)
 
