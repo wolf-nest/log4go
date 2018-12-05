@@ -1,6 +1,7 @@
 package log4go
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path"
@@ -63,6 +64,7 @@ type FileWriter struct {
 	mu          sync.Mutex
 	cmu         sync.Mutex
 	file        *os.File
+	w           bufio.Writer
 	enableColor bool
 }
 
@@ -176,11 +178,11 @@ func (this *FileWriter) openOrCreate(pLen int64) error {
 }
 
 func (this *FileWriter) createFile() error {
-	f, err := os.OpenFile(this.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	file, err := os.OpenFile(this.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
 		return err
 	}
-	this.file = f
+	this.file = file
 	this.size = 0
 	return nil
 }
