@@ -21,10 +21,10 @@ type FileWriter struct {
 	maxSize     int64
 	maxAge      int64
 	size        int64
-	mutex       sync.Mutex
+	mu          sync.Mutex
+	cmu         sync.Mutex
 	file        *os.File
 	enableColor bool
-	bgTaskChan  chan bool
 }
 
 func NewFileWriter(level int, dir string) *FileWriter {
@@ -38,8 +38,6 @@ func NewFileWriter(level int, dir string) *FileWriter {
 		return nil
 	}
 	fw.enableColor = false
-	fw.bgTaskChan = make(chan bool, 1)
-	go fw.runBgTask()
 
 	return fw
 }
@@ -61,8 +59,8 @@ func (this *FileWriter) Write(p []byte) (n int, err error) {
 		return 0, nil
 	}
 
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+	this.mu.Lock()
+	defer this.mu.Unlock()
 
 	pLen := int64(len(p))
 	if this.file == nil {
@@ -84,9 +82,8 @@ func (this *FileWriter) Write(p []byte) (n int, err error) {
 }
 
 func (this *FileWriter) Close() error {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	close(this.bgTaskChan)
+	this.mu.Lock()
+	defer this.mu.Unlock()
 	return this.close()
 }
 
@@ -105,7 +102,7 @@ func (this *FileWriter) EnableColor() bool {
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
-	this.doClean()
+	this.cleanLogs()
 
 	// 获取log文件信息
 	info, err := os.Stat(this.filename)
@@ -149,7 +146,7 @@ func (this *FileWriter) renameFile() error {
 	_, err := os.Stat(this.filename)
 	if err == nil {
 		var now = time.Now()
-		var newName = path.Join(this.dir, fmt.Sprintf("%s_%.9d.log", now.Format("2006_01_02_15_04_05"), now.Nanosecond()))
+		var newName = path.Join(this.dir, fmt.Sprintf("log_%s_%d.log", now.Format("2006_01_02_15_04_05"), now.Nanosecond()))
 		if err := os.Rename(this.filename, newName); err != nil {
 			return err
 		}
@@ -169,7 +166,7 @@ func (this *FileWriter) rotate() error {
 	if err := this.createFile(); err != nil {
 		return err
 	}
-	this.doClean()
+	this.cleanLogs()
 	return nil
 }
 
@@ -177,35 +174,22 @@ func (this *FileWriter) cleanLogs() {
 	if this.maxAge <= 0 {
 		return
 	}
+	this.cmu.Lock()
+	go func() {
+		defer this.cmu.Unlock()
+		var dir = filepath.Dir(this.dir)
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) (rErr error) {
+			defer func() {
+				if r := recover(); r != nil {
+				}
+			}()
 
-	var dir = filepath.Dir(this.dir)
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) (rErr error) {
-		defer func() {
-			if r := recover(); r != nil {
+			if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-this.maxAge) {
+				if filepath.Ext(info.Name()) == kLogFileExt && info.Name() != kDefaultLogFile {
+					rErr = os.Remove(path)
+				}
 			}
-		}()
-
-		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-this.maxAge) {
-			if filepath.Ext(info.Name()) == kLogFileExt && info.Name() != kDefaultLogFile {
-				rErr = os.Remove(path)
-			}
-		}
-		return rErr
-	})
-}
-
-func (this *FileWriter) runBgTask() {
-	for {
-		select {
-		case _, ok := <-this.bgTaskChan:
-			if !ok {
-				return
-			}
-			this.cleanLogs()
-		}
-	}
-}
-
-func (this *FileWriter) doClean() {
-	this.bgTaskChan <- true
+			return rErr
+		})
+	}()
 }

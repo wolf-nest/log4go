@@ -1,12 +1,10 @@
 package main
 
-import (
-	"github.com/smartwalle/log4go"
-)
+import "github.com/smartwalle/log4go"
 
 func main() {
-	log4go.Debugln("debugln")
-	log4go.Println("println")
-	log4go.Infoln("infoln")
-	log4go.Warnln("warnln")
+	log4go.Debugln("https://github.com/smartwalle?tab=repositories")
+	log4go.Println("https://github.com/smartwalle?tab=repositories")
+	log4go.Infoln("https://github.com/smartwalle?tab=repositories")
+	log4go.Warnln("https://github.com/smartwalle?tab=repositories")
 }
