@@ -345,7 +345,7 @@ func (this *Logger) Fatalln(args ...interface{}) {
 }
 
 func (this *Logger) Output(calldepth int, s string) error {
-	this.WriteMessage(calldepth+1, K_LOG_LEVEL_DEBUG, s)
+	this.WriteMessage(calldepth+1, K_LOG_LEVEL_TRACE, s)
 	return nil
 }
 
@@ -499,6 +499,6 @@ func Fatalln(args ...interface{}) {
 }
 
 func Output(calldepth int, s string) error {
-	defaultLogger.WriteMessage(calldepth+1, K_LOG_LEVEL_DEBUG, s)
+	defaultLogger.WriteMessage(calldepth+1, K_LOG_LEVEL_TRACE, s)
 	return nil
 }
