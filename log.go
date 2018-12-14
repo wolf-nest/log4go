@@ -12,11 +12,13 @@ import (
 
 // --------------------------------------------------------------------------------
 const (
-	K_LOG_LEVEL_DEBUG   = iota //= "Debug"
-	K_LOG_LEVEL_INFO           //= "Info"
-	K_LOG_LEVEL_WARNING        //= "Warning"
-	K_LOG_LEVEL_PANIC          //= "Panic"
-	K_LOG_LEVEL_FATAL          //= "Fatal"
+	K_LOG_LEVEL_TRACE   = iota // "Trace
+	K_LOG_LEVEL_DEBUG          // "Debug"
+	K_LOG_LEVEL_INFO           // "Info"
+	K_LOG_LEVEL_WARNING        // "Warning"
+	K_LOG_LEVEL_ERROR          // "Error"
+	K_LOG_LEVEL_PANIC          // "Panic"
+	K_LOG_LEVEL_FATAL          // "Fatal"
 )
 
 //30 black		黑色
@@ -25,50 +27,60 @@ const (
 //33 yellow		黄色
 //34 blue		蓝色
 //35 magenta    洋红
-//36 cyan		蓝绿色
+//36 cyan		天蓝色
 //37 white		白色
 
-//LevelDebug = "Debug"		绿色  	32
-//LevelInfo  = "Info"		蓝色  	34
-//LevelWarn  = "Warn"    	黄色  	33
-//LevelFatal = "Fatal"   	洋红  	35
-//LevelPanic = "Panic"   	红色  	31
-
-func green(c string) string {
-	return fmt.Sprintf("\033[1;32m%s\033[0m", c)
-}
-
-func blue(c string) string {
-	return fmt.Sprintf("\033[1;34m%s\033[0m", c)
-}
-
-func yellow(c string) string {
-	return fmt.Sprintf("\033[1;33m%s\033[0m", c)
-}
-
-func magenta(c string) string {
-	return fmt.Sprintf("\033[1;35m%s\033[0m", c)
+func black(c string) string {
+	return fmt.Sprintf("\033[1;30m%s\033[0m", c)
 }
 
 func red(c string) string {
 	return fmt.Sprintf("\033[1;31m%s\033[0m", c)
 }
 
+func green(c string) string {
+	return fmt.Sprintf("\033[1;32m%s\033[0m", c)
+}
+
+func yellow(c string) string {
+	return fmt.Sprintf("\033[1;33m%s\033[0m", c)
+}
+
+func blue(c string) string {
+	return fmt.Sprintf("\033[1;34m%s\033[0m", c)
+}
+
+func magenta(c string) string {
+	return fmt.Sprintf("\033[1;35m%s\033[0m", c)
+}
+
+func skyBlue(c string) string {
+	return fmt.Sprintf("\033[1;36m%s\033[0m", c)
+}
+
+func white(c string) string {
+	return fmt.Sprintf("\033[1;37m%s\033[0m", c)
+}
+
 var (
 	levelShortNames = []string{
+		"[T]",
 		"[D]",
 		"[I]",
 		"[W]",
+		"[E]",
 		"[P]",
 		"[F]",
 	}
 
 	levelWithColors = []string{
-		green(levelShortNames[0]),
-		blue(levelShortNames[1]),
-		yellow(levelShortNames[2]),
-		magenta(levelShortNames[3]),
+		white(levelShortNames[0]),
+		green(levelShortNames[1]),
+		blue(levelShortNames[2]),
+		yellow(levelShortNames[3]),
 		red(levelShortNames[4]),
+		magenta(levelShortNames[5]),
+		black(levelShortNames[6]),
 	}
 )
 
@@ -252,21 +264,30 @@ func (this *Logger) RemoveWriter(name string) {
 	delete(this.writers, name)
 }
 
+// trace
+func (this *Logger) Tracef(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
+}
+
+func (this *Logger) Traceln(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
+//print
+func (this *Logger) Printf(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
+}
+
+func (this *Logger) Println(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
 //debug
 func (this *Logger) Debugf(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Debugln(args ...interface{}) {
-	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
-}
-
-//print
-func (this *Logger) Printf(format string, args ...interface{}) {
-	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
-}
-
-func (this *Logger) Println(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
@@ -286,6 +307,17 @@ func (this *Logger) Warnf(format string, args ...interface{}) {
 
 func (this *Logger) Warnln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
+}
+
+//error
+func (this *Logger) Errorf(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintf(format, args...))
+	os.Exit(-1)
+}
+
+func (this *Logger) Errorln(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
+	os.Exit(-1)
 }
 
 //panic
@@ -324,7 +356,7 @@ var once sync.Once
 func init() {
 	once.Do(func() {
 		defaultLogger = New()
-		defaultLogger.AddWriter("stdout", NewStdWriter(K_LOG_LEVEL_DEBUG))
+		defaultLogger.AddWriter("stdout", NewStdWriter(K_LOG_LEVEL_TRACE))
 	})
 }
 
@@ -388,21 +420,30 @@ func RemoveWriter(name string) {
 	defaultLogger.RemoveWriter(name)
 }
 
+//trace
+func Tracef(format string, args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
+}
+
+func Traceln(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
+//print
+func Printf(format string, args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
+}
+
+func Println(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
 //debug
 func Debugf(format string, args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
 }
 
 func Debugln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
-}
-
-//print
-func Printf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
-}
-
-func Println(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
@@ -413,6 +454,15 @@ func Infof(format string, args ...interface{}) {
 
 func Infoln(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+}
+
+//error
+func Errorf(format string, args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintf(format, args...))
+}
+
+func Errorln(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
 }
 
 //warn
