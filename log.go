@@ -78,9 +78,9 @@ var (
 		green(levelShortNames[1]),
 		blue(levelShortNames[2]),
 		yellow(levelShortNames[3]),
-		red(levelShortNames[4]),
-		magenta(levelShortNames[5]),
-		black(levelShortNames[6]),
+		magenta(levelShortNames[4]),
+		red(levelShortNames[5]),
+		red(levelShortNames[6]),
 	}
 )
 
@@ -495,7 +495,7 @@ func Fatalf(format string, args ...interface{}) {
 
 func Fatalln(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_FATAL, fmt.Sprintln(args...))
-	os.Exit(-1)
+	//os.Exit(-1)
 }
 
 func Output(calldepth int, s string) error {
