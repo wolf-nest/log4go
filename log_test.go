@@ -1,14 +1,13 @@
 package log4go
 
 import (
-	"os"
 	"testing"
 )
 
 func TestMain(m *testing.M) {
-	var file = NewFileWriter(K_LOG_LEVEL_DEBUG, WithLogDir("./logs"))
-	AddWriter("file", file)
-	os.Exit(m.Run())
+	//var file = NewFileWriter(K_LOG_LEVEL_DEBUG, WithLogDir("./logs"))
+	//AddWriter("file", file)
+	//os.Exit(m.Run())
 }
 
 func TestLogger_Write(t *testing.T) {
