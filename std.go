@@ -25,10 +25,6 @@ func NewStdWriter(level int) *StdWriter {
 	return sw
 }
 
-func (this *StdWriter) Level() int {
-	return this.level
-}
-
 func (this *StdWriter) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
@@ -41,6 +37,10 @@ func (this *StdWriter) Write(p []byte) (n int, err error) {
 
 func (this *StdWriter) Close() error {
 	return nil
+}
+
+func (this *StdWriter) Level() int {
+	return this.level
 }
 
 func (this *StdWriter) EnableColor() bool {

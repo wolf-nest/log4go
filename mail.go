@@ -19,10 +19,6 @@ func NewMailWriter(level int) *MailWriter {
 	return mw
 }
 
-func (this *MailWriter) Level() int {
-	return this.level
-}
-
 func (this *MailWriter) SetLevel(level int) {
 	this.level = level
 }
@@ -93,6 +89,10 @@ func (this *MailWriter) Write(p []byte) (n int, err error) {
 
 func (this *MailWriter) Close() error {
 	return nil
+}
+
+func (this *MailWriter) Level() int {
+	return this.level
 }
 
 func (this *MailWriter) EnableColor() bool {

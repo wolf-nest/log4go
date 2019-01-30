@@ -87,10 +87,6 @@ func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	return fw
 }
 
-func (this *FileWriter) Level() int {
-	return this.level
-}
-
 func (this *FileWriter) SetMaxSize(mb int) {
 	this.maxSize = int64(mb) * 1024 * 1024
 }
@@ -140,6 +136,10 @@ func (this *FileWriter) close() error {
 	this.file = nil
 	this.size = 0
 	return err
+}
+
+func (this *FileWriter) Level() int {
+	return this.level
 }
 
 func (this *FileWriter) EnableColor() bool {
