@@ -243,7 +243,7 @@ func (this *Logger) WriteMessage(callDepth, level int, msg string) {
 			} else {
 				levelName = levelShortNames[level]
 			}
-			fmt.Fprintf(w, "%s%s %s %s:%d %s", this.prefix, now.Format("2006/01/02 15:04:05"), levelName, file, line, msg)
+			fmt.Fprintf(w, "%s%s %s %s:%d %s", this.prefix, now.Format("2006/01/02 15:04:05.000000"), levelName, file, line, msg)
 		}
 	}
 }
