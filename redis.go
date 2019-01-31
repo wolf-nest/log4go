@@ -17,7 +17,8 @@ type RedisWriter struct {
 	key   string
 }
 
-func NewRedisWriter(level int, pool *dbr.Pool, key string) *RedisWriter {
+func NewRedisWriter(level int, key string, addr string, maxActive, maxIdle int, opts ...redis.DialOption) *RedisWriter {
+	var pool = dbr.NewRedis(addr, maxActive, maxIdle, opts...)
 	var rw = &RedisWriter{}
 	rw.level = level
 	rw.pool = pool
