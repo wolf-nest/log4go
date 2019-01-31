@@ -273,12 +273,20 @@ func (this *Logger) Traceln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
 }
 
+func (this *Logger) T(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
 //print
 func (this *Logger) Printf(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Println(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
+func (this *Logger) P(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
 }
 
@@ -291,12 +299,20 @@ func (this *Logger) Debugln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
+func (this *Logger) D(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+}
+
 //info
 func (this *Logger) Infof(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 func (this *Logger) Infoln(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+}
+
+func (this *Logger) I(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
 }
 
@@ -309,6 +325,10 @@ func (this *Logger) Warnln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
+func (this *Logger) W(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
+}
+
 //error
 func (this *Logger) Errorf(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintf(format, args...))
@@ -316,6 +336,11 @@ func (this *Logger) Errorf(format string, args ...interface{}) {
 }
 
 func (this *Logger) Errorln(args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
+	os.Exit(-1)
+}
+
+func (this *Logger) E(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
 	os.Exit(-1)
 }
@@ -429,12 +454,20 @@ func Traceln(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
 }
 
+func T(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
 //print
 func Printf(format string, args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
 }
 
 func Println(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
+func P(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
 }
 
@@ -447,12 +480,20 @@ func Debugln(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
+func D(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
+}
+
 //info
 func Infof(format string, args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 func Infoln(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+}
+
+func I(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
 }
 
@@ -465,12 +506,20 @@ func Errorln(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
 }
 
+func E(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
+}
+
 //warn
 func Warnf(format string, args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
 }
 
 func Warnln(args ...interface{}) {
+	defaultLogger.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
+}
+
+func W(args ...interface{}) {
 	defaultLogger.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 

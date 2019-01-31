@@ -12,7 +12,7 @@ func main() {
 		}
 	}()
 
-	log4go.SetPrefix("[test-2]")
+	log4go.SetPrefix("[test-1]")
 	log4go.AddWriter("redis", log4go.NewRedisWriter(log4go.K_LOG_LEVEL_TRACE, "test_log", "192.168.1.99:6379", 10, 2, redis.DialDatabase(15)))
 
 	for {
