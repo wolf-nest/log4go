@@ -273,6 +273,10 @@ func (this *Logger) Traceln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
 }
 
+func (this *Logger) T(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
+}
+
 //print
 func (this *Logger) Printf(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
@@ -280,6 +284,10 @@ func (this *Logger) Printf(format string, args ...interface{}) {
 
 func (this *Logger) Println(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintln(args...))
+}
+
+func (this *Logger) P(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_TRACE, fmt.Sprintf(format, args...))
 }
 
 //debug
@@ -291,6 +299,10 @@ func (this *Logger) Debugln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintln(args...))
 }
 
+func (this *Logger) D(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_DEBUG, fmt.Sprintf(format, args...))
+}
+
 //info
 func (this *Logger) Infof(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
@@ -298,6 +310,10 @@ func (this *Logger) Infof(format string, args ...interface{}) {
 
 func (this *Logger) Infoln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintln(args...))
+}
+
+func (this *Logger) I(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_INFO, fmt.Sprintf(format, args...))
 }
 
 //warn
@@ -309,6 +325,10 @@ func (this *Logger) Warnln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintln(args...))
 }
 
+func (this *Logger) W(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_WARNING, fmt.Sprintf(format, args...))
+}
+
 //error
 func (this *Logger) Errorf(format string, args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintf(format, args...))
@@ -317,6 +337,11 @@ func (this *Logger) Errorf(format string, args ...interface{}) {
 
 func (this *Logger) Errorln(args ...interface{}) {
 	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintln(args...))
+	os.Exit(-1)
+}
+
+func (this *Logger) E(format string, args ...interface{}) {
+	this.WriteMessage(2, K_LOG_LEVEL_ERROR, fmt.Sprintf(format, args...))
 	os.Exit(-1)
 }
 
