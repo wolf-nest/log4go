@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/smartwalle/dbr"
+	"io"
+	"time"
 )
 
 // --------------------------------------------------------------------------------
@@ -50,8 +52,8 @@ func (this *RedisWriter) Level() int {
 	return this.level
 }
 
-func (this *RedisWriter) EnableColor() bool {
-	return false
+func (this *RedisWriter) WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
+	fmt.Fprintf(this, "%s%s %s %s:%d %s", prefix, timeStr, levelName, file, line, msg)
 }
 
 // --------------------------------------------------------------------------------
@@ -68,11 +70,11 @@ func NewRedisHub(key string, addr string, maxActive, maxIdle int, opts ...redis.
 	return rh
 }
 
-func (this *RedisHub) Redirect(w Writer) {
+func (this *RedisHub) Redirect(w io.Writer) {
 	go this.redirect(this.key, w)
 }
 
-func (this *RedisHub) redirect(key string, w Writer) {
+func (this *RedisHub) redirect(key string, w io.Writer) {
 	var rSess = this.pool.GetSession()
 	defer rSess.Close()
 

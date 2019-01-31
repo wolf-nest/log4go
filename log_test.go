@@ -1,26 +1,29 @@
 package log4go
 
 import (
+	"os"
 	"testing"
 )
 
 func TestMain(m *testing.M) {
-	//var file = NewFileWriter(K_LOG_LEVEL_DEBUG, WithLogDir("./logs"))
-	//AddWriter("file", file)
-	//os.Exit(m.Run())
+	var file = NewFileWriter(K_LOG_LEVEL_TRACE, WithLogDir("./logs"))
+	AddWriter("file", file)
+	RemoveWriter("stdout")
+	DisablePath()
+	os.Exit(m.Run())
 }
 
 func TestLogger_Write(t *testing.T) {
+	Traceln("default logger trace", 1)
+	Tracef("default logger trace fmt %d \n", 10)
 	Debugln("default logger debug", 1)
 	Debugf("default logger debug fmt %d \n", 10)
 	Infoln("default logger info", 1)
 	Infof("default logger info fmt %d \n", 10)
 	Warnln("default logger warn", 1)
-	Warnf("default logger warn fmt %d \n", 1)
-	Panicln("default logger panic", 1)
-	Panicf("default logger panic fmt %d \n", 1)
-	Fatalln("default logger fatal", 1)
-	Fatalf("default logger fatal fmt %d \n", 1)
+	Warnf("default logger warn fmt %d \n", 10)
+	Errorln("default logger error", 1)
+	Errorf("default logger error fmt %d \n", 10)
 }
 
 func BenchmarkPrintln(b *testing.B) {

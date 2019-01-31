@@ -142,8 +142,11 @@ func (this *FileWriter) Level() int {
 	return this.level
 }
 
-func (this *FileWriter) EnableColor() bool {
-	return false
+func (this *FileWriter) WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
+	if this.enableColor {
+		levelName = levelColors[level]
+	}
+	fmt.Fprintf(this, "%s%s %s %s:%d %s", prefix, timeStr, levelName, file, line, msg)
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
