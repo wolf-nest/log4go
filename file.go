@@ -55,17 +55,16 @@ func WithLogDir(dir string) FileWriterOption {
 
 // --------------------------------------------------------------------------------
 type FileWriter struct {
-	level       int
-	dir         string
-	filename    string
-	maxSize     int64
-	maxAge      int64
-	size        int64
-	mu          sync.Mutex
-	cmu         sync.Mutex
-	file        *os.File
-	w           bufio.Writer
-	enableColor bool
+	level    int
+	dir      string
+	filename string
+	maxSize  int64
+	maxAge   int64
+	size     int64
+	mu       sync.Mutex
+	cmu      sync.Mutex
+	file     *os.File
+	w        bufio.Writer
 }
 
 func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
@@ -74,7 +73,6 @@ func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	fw.dir = "./logs"
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
-	fw.enableColor = false
 	for _, opt := range opts {
 		opt.Apply(fw)
 	}
@@ -143,9 +141,6 @@ func (this *FileWriter) Level() int {
 }
 
 func (this *FileWriter) WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
-	if this.enableColor {
-		levelName = levelColors[level]
-	}
 	fmt.Fprintf(this, "%s%s %s %s:%d %s", prefix, timeStr, levelName, file, line, msg)
 }
 
