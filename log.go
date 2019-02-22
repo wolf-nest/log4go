@@ -71,6 +71,10 @@ type Logger interface {
 	AddWriter(name string, w Writer)
 	RemoveWriter(name string)
 
+	Log(args ...interface{})
+	Logf(format string, args ...interface{})
+	L(format string, args ...interface{})
+
 	Tracef(format string, args ...interface{})
 	Traceln(args ...interface{})
 	T(format string, args ...interface{})
@@ -100,10 +104,6 @@ type Logger interface {
 
 	Fatalf(format string, args ...interface{})
 	Fatalln(args ...interface{})
-
-	Log(args ...interface{})
-	Logf(format string, args ...interface{})
-	L(format string, args ...interface{})
 
 	Output(calldepth int, s string) error
 }
