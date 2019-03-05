@@ -6,14 +6,16 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
 
 // --------------------------------------------------------------------------------
 const (
-	kDefaultLogFile = "temp_log.log"
-	kLogFileExt     = ".log"
+	kLogDir     = "./logs"
+	kLogFile    = "temp_log.log"
+	kLogFileExt = ".log"
 )
 
 type FileWriterOption interface {
@@ -28,7 +30,7 @@ func (f fwOptionFunc) Apply(w *FileWriter) {
 
 func WithMaxAge(sec int64) FileWriterOption {
 	return fwOptionFunc(func(w *FileWriter) {
-		if sec < 0 {
+		if sec <= 0 {
 			return
 		}
 		w.maxAge = sec
@@ -37,7 +39,7 @@ func WithMaxAge(sec int64) FileWriterOption {
 
 func WithMaxSize(mb int64) FileWriterOption {
 	return fwOptionFunc(func(w *FileWriter) {
-		if mb < 0 {
+		if mb <= 0 {
 			return
 		}
 		w.maxSize = mb * 1024 * 1024
@@ -46,7 +48,7 @@ func WithMaxSize(mb int64) FileWriterOption {
 
 func WithLogDir(dir string) FileWriterOption {
 	return fwOptionFunc(func(w *FileWriter) {
-		if dir == "" {
+		if strings.TrimSpace(dir) == "" {
 			return
 		}
 		w.dir = dir
@@ -70,7 +72,7 @@ type FileWriter struct {
 func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	var fw = &FileWriter{}
 	fw.level = level
-	fw.dir = "./logs"
+	fw.dir = kLogDir
 	fw.maxSize = 10 * 1024 * 1024
 	fw.maxAge = 0
 	for _, opt := range opts {
@@ -80,7 +82,7 @@ func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
 	if err := os.MkdirAll(fw.dir, 0744); err != nil {
 		return nil
 	}
-	fw.filename = path.Join(fw.dir, kDefaultLogFile)
+	fw.filename = path.Join(fw.dir, kLogFile)
 
 	return fw
 }
@@ -145,13 +147,13 @@ func (this *FileWriter) WriteMessage(logTime time.Time, prefix, timeStr string, 
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
-	this.cleanLogs()
+	this.clean()
 
 	// 获取log文件信息
 	info, err := os.Stat(this.filename)
 	if os.IsNotExist(err) {
 		// 如果log文件不存在，直接创建新的log文件
-		return this.createFile()
+		return this.create()
 	}
 	if err != nil {
 		return err
@@ -166,7 +168,7 @@ func (this *FileWriter) openOrCreate(pLen int64) error {
 	file, err := os.OpenFile(this.filename, os.O_APPEND|os.O_WRONLY, 0777)
 	if err != nil {
 		// 如果打开文件出错，则创建新的文件
-		return this.createFile()
+		return this.create()
 	}
 
 	this.file = file
@@ -175,7 +177,7 @@ func (this *FileWriter) openOrCreate(pLen int64) error {
 	return nil
 }
 
-func (this *FileWriter) createFile() error {
+func (this *FileWriter) create() error {
 	file, err := os.OpenFile(this.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
 		return err
@@ -185,7 +187,7 @@ func (this *FileWriter) createFile() error {
 	return nil
 }
 
-func (this *FileWriter) renameFile() error {
+func (this *FileWriter) rename() error {
 	_, err := os.Stat(this.filename)
 	if err == nil {
 		var now = time.Now()
@@ -202,18 +204,18 @@ func (this *FileWriter) rotate() error {
 		return err
 	}
 
-	if err := this.renameFile(); err != nil {
+	if err := this.rename(); err != nil {
 		return err
 	}
 
-	if err := this.createFile(); err != nil {
+	if err := this.create(); err != nil {
 		return err
 	}
-	this.cleanLogs()
+	this.clean()
 	return nil
 }
 
-func (this *FileWriter) cleanLogs() {
+func (this *FileWriter) clean() {
 	if this.maxAge <= 0 {
 		return
 	}
@@ -228,7 +230,7 @@ func (this *FileWriter) cleanLogs() {
 			}()
 
 			if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-this.maxAge) {
-				if filepath.Ext(info.Name()) == kLogFileExt && info.Name() != kDefaultLogFile {
+				if filepath.Ext(info.Name()) == kLogFileExt && info.Name() != kLogFile {
 					rErr = os.Remove(path)
 				}
 			}
