@@ -449,7 +449,7 @@ func GetStackLevel() int {
 }
 
 func EnableStack() {
-	defaultLogger.PrintStack()
+	defaultLogger.EnableStack()
 }
 
 func DisableStack() {
