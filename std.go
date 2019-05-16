@@ -98,9 +98,9 @@ func (this *StdWriter) Level() int {
 	return this.level
 }
 
-func (this *StdWriter) WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
+func (this *StdWriter) WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
 	if this.enableColor {
 		levelName = levelColors[level]
 	}
-	fmt.Fprintf(this, "%s%s %s %s:%d %s", prefix, timeStr, levelName, file, line, msg)
+	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, timeStr, levelName, file, line, msg)
 }

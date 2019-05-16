@@ -97,6 +97,6 @@ func (this *MailWriter) Level() int {
 	return this.level
 }
 
-func (this *MailWriter) WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
-	fmt.Fprintf(this, "%s%s %s %s:%d %s", prefix, timeStr, levelName, file, line, msg)
+func (this *MailWriter) WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
+	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, timeStr, levelName, file, line, msg)
 }

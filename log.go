@@ -50,8 +50,26 @@ func WithPrefix(p string) Option {
 	})
 }
 
+func WithService(s string) Option {
+	return optionFunc(func(l Logger) {
+		l.SetService(s)
+	})
+}
+
+func WithInstance(s string) Option {
+	return optionFunc(func(l Logger) {
+		l.SetInstance(s)
+	})
+}
+
 // --------------------------------------------------------------------------------
 type Logger interface {
+	SetService(service string)
+	Service() string
+
+	SetInstance(instance string)
+	Instance() string
+
 	SetPrefix(prefix string)
 	Prefix() string
 
@@ -123,13 +141,15 @@ type Writer interface {
 
 	Level() int
 
-	WriteMessage(logTime time.Time, prefix, timeStr string, level int, levelName, file string, line int, msg string)
+	WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string)
 }
 
 type logger struct {
 	mu         sync.Mutex
 	writers    map[string]Writer
 	prefix     string
+	service    string
+	instance   string
 	printStack bool
 	stackLevel int
 	printPath  bool
@@ -145,6 +165,30 @@ func New(opts ...Option) Logger {
 		opt.Apply(l)
 	}
 	return l
+}
+
+func (this *logger) SetService(service string) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	this.service = service
+}
+
+func (this *logger) Service() string {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.service
+}
+
+func (this *logger) SetInstance(instance string) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	this.instance = instance
+}
+
+func (this *logger) Instance() string {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.instance
 }
 
 func (this *logger) SetPrefix(prefix string) {
@@ -237,7 +281,7 @@ func (this *logger) WriteMessage(callDepth, level int, msg string) {
 
 	for _, w := range this.writers {
 		if w.Level() <= level {
-			w.WriteMessage(now, this.prefix, nowStr, level, levelName, file, line, msg)
+			w.WriteMessage(now, this.service, this.instance, this.prefix, nowStr, level, levelName, file, line, msg)
 		}
 	}
 }
@@ -430,6 +474,22 @@ func init() {
 		defaultLogger = New()
 		defaultLogger.AddWriter("stdout", NewStdWriter(K_LOG_LEVEL_TRACE))
 	})
+}
+
+func SetService(service string) {
+	defaultLogger.SetService(service)
+}
+
+func Service() string {
+	return defaultLogger.Service()
+}
+
+func SetInstance(instance string) {
+	defaultLogger.SetInstance(instance)
+}
+
+func Instance() string {
+	return defaultLogger.Instance()
 }
 
 func SetPrefix(prefix string) {
