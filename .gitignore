@@ -18,3 +18,4 @@
 .idea
 *.iml
 logs
+.DS_Store
