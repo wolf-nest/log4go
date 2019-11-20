@@ -10,12 +10,12 @@ import (
 
 // --------------------------------------------------------------------------------
 const (
-	kRedisLogKey = "log"
+	kRedisLogField = "log"
 )
 
 type RedisWriter struct {
 	level int
-	pool  *dbr.Pool
+	pool  dbr.Pool
 	key   string
 }
 
@@ -36,7 +36,7 @@ func (this *RedisWriter) Write(p []byte) (n int, err error) {
 	var rSess = this.pool.GetSession()
 	defer rSess.Close()
 
-	rSess.XADD(this.key, 0, "*", kRedisLogKey, p)
+	rSess.XADD(this.key, 0, "*", kRedisLogField, p)
 
 	return len(p), err
 }
@@ -58,7 +58,7 @@ func (this *RedisWriter) WriteMessage(logTime time.Time, service, instance, pref
 
 // --------------------------------------------------------------------------------
 type RedisHub struct {
-	pool *dbr.Pool
+	pool dbr.Pool
 	key  string
 }
 
@@ -91,7 +91,7 @@ func (this *RedisHub) redirect(key string, w io.Writer) {
 		}
 
 		for _, s := range sList {
-			var log = s.Fields[kRedisLogKey]
+			var log = s.Fields[kRedisLogField]
 			w.Write([]byte(log))
 			rSess.XDEL(queue, s.Id)
 		}
