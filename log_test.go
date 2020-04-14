@@ -6,7 +6,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	var file = NewFileWriter(K_LOG_LEVEL_TRACE, WithLogDir("./logs"))
+	var file = NewFileWriter(LevelTrace, WithLogDir("./logs"))
 	AddWriter("file", file)
 	RemoveWriter("stdout")
 	DisablePath()
