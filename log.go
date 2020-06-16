@@ -466,235 +466,191 @@ func (this *logger) Output(calldepth int, s string) error {
 }
 
 // --------------------------------------------------------------------------------
-var defaultLogger Logger
+var sharedInstance Logger
 var once sync.Once
 
 func init() {
 	once.Do(func() {
-		defaultLogger = New()
-		defaultLogger.AddWriter("stdout", NewStdWriter(LevelTrace))
+		sharedInstance = New()
+		sharedInstance.AddWriter("stdout", NewStdWriter(LevelTrace))
 	})
 }
 
-func SetService(service string) {
-	defaultLogger.SetService(service)
-}
-
-func Service() string {
-	return defaultLogger.Service()
-}
-
-func SetInstance(instance string) {
-	defaultLogger.SetInstance(instance)
-}
-
-func Instance() string {
-	return defaultLogger.Instance()
+func SharedInstance() Logger {
+	return sharedInstance
 }
 
 func SetPrefix(prefix string) {
-	defaultLogger.SetPrefix(prefix)
+	sharedInstance.SetPrefix(prefix)
 }
 
 func Prefix() string {
-	return defaultLogger.Prefix()
-}
-
-func SetStackLevel(level int) {
-	defaultLogger.SetStackLevel(level)
-}
-
-func GetStackLevel() int {
-	return defaultLogger.StackLevel()
-}
-
-func EnableStack() {
-	defaultLogger.EnableStack()
-}
-
-func DisableStack() {
-	defaultLogger.DisableStack()
-}
-
-func PrintStack() bool {
-	return defaultLogger.PrintStack()
-}
-
-func EnablePath() {
-	defaultLogger.EnablePath()
-}
-
-func DisablePath() {
-	defaultLogger.DisablePath()
-}
-
-func PrintPath() bool {
-	return defaultLogger.PrintPath()
+	return sharedInstance.Prefix()
 }
 
 func AddWriter(name string, w Writer) {
-	defaultLogger.AddWriter(name, w)
+	sharedInstance.AddWriter(name, w)
 }
 
 func RemoveWriter(name string) {
-	defaultLogger.RemoveWriter(name)
+	sharedInstance.RemoveWriter(name)
 }
 
 // log
 func Logf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 func Logln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func Log(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func L(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 // trace
 func Tracef(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 func Traceln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func Trace(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func T(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 // print
 func Printf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 func Println(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func Print(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
 }
 
 func P(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
 // debug
 func Debugf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
 func Debugln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
 }
 
 func Debug(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
 }
 
 func D(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
 // info
 func Infof(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
 func Infoln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
 }
 
 func Info(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
 }
 
 func I(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
 // error
 func Errorf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
 }
 
 func Errorln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelError, fmt.Sprintln(args...))
 }
 
 func Error(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelError, fmt.Sprintln(args...))
 }
 
 func E(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
 }
 
 // warn
 func Warnf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
 func Warnln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
 }
 
 func Warn(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
 }
 
 func W(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
 // panic
 func Panicf(format string, args ...interface{}) {
 	var msg = fmt.Sprintf(format, args...)
-	defaultLogger.WriteMessage(2, LevelPanic, msg)
+	sharedInstance.WriteMessage(2, LevelPanic, msg)
 	panic(msg)
 }
 
 func Panicln(args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	defaultLogger.WriteMessage(2, LevelPanic, msg)
+	sharedInstance.WriteMessage(2, LevelPanic, msg)
 	panic(msg)
 }
 
 func Panic(args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	defaultLogger.WriteMessage(2, LevelPanic, msg)
+	sharedInstance.WriteMessage(2, LevelPanic, msg)
 	panic(msg)
 }
 
 // fatal
 func Fatalf(format string, args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelFatal, fmt.Sprintf(format, args...))
+	sharedInstance.WriteMessage(2, LevelFatal, fmt.Sprintf(format, args...))
 	os.Exit(-1)
 }
 
 func Fatalln(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
 	//os.Exit(-1)
 }
 
 func Fatal(args ...interface{}) {
-	defaultLogger.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+	sharedInstance.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
 	//os.Exit(-1)
 }
 
 func Output(calldepth int, s string) error {
-	defaultLogger.WriteMessage(calldepth+1, LevelTrace, s)
+	sharedInstance.WriteMessage(calldepth+1, LevelTrace, s)
 	return nil
 }

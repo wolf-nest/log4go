@@ -9,7 +9,6 @@ func TestMain(m *testing.M) {
 	var file = NewFileWriter(LevelTrace, WithLogDir("./logs"))
 	AddWriter("file", file)
 	RemoveWriter("stdout")
-	DisablePath()
 	os.Exit(m.Run())
 }
 
