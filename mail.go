@@ -4,28 +4,27 @@ import (
 	"errors"
 	"fmt"
 	"github.com/smartwalle/mail4go"
-	"time"
 )
 
 type MailWriter struct {
-	level   int
+	level   Level
 	config  *mail4go.MailConfig
 	subject string
 	from    string
 	to      []string
 }
 
-func NewMailWriter(level int) *MailWriter {
+func NewMailWriter(level Level) *MailWriter {
 	var mw = &MailWriter{}
 	mw.level = level
 	return mw
 }
 
-func (this *MailWriter) SetLevel(level int) {
+func (this *MailWriter) SetLevel(level Level) {
 	this.level = level
 }
 
-func (this *MailWriter) GetLevel() int {
+func (this *MailWriter) GetLevel() Level {
 	return this.level
 }
 
@@ -93,10 +92,10 @@ func (this *MailWriter) Close() error {
 	return nil
 }
 
-func (this *MailWriter) Level() int {
+func (this *MailWriter) Level() Level {
 	return this.level
 }
 
-func (this *MailWriter) WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
-	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, timeStr, levelName, file, line, msg)
+func (this *MailWriter) WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
+	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, logTime, LevelNames[level], file, line, msg)
 }

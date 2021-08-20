@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 )
 
 //30 black		黑色
@@ -63,13 +62,13 @@ var (
 )
 
 type StdWriter struct {
-	level       int
+	level       Level
 	out         io.Writer
 	mutex       sync.Mutex
 	enableColor bool
 }
 
-func NewStdWriter(level int) *StdWriter {
+func NewStdWriter(level Level) *StdWriter {
 	var sw = &StdWriter{}
 	sw.level = level
 	sw.out = os.Stdout
@@ -94,13 +93,14 @@ func (this *StdWriter) Close() error {
 	return nil
 }
 
-func (this *StdWriter) Level() int {
+func (this *StdWriter) Level() Level {
 	return this.level
 }
 
-func (this *StdWriter) WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
+func (this *StdWriter) WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
+	var levelName = LevelNames[level]
 	if this.enableColor {
 		levelName = levelColors[level]
 	}
-	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, timeStr, levelName, file, line, msg)
+	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, logTime, levelName, file, line, msg)
 }

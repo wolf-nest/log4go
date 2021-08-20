@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-// --------------------------------------------------------------------------------
 const (
 	kLogDir     = "./logs"
 	kLogFile    = "temp_log.log"
@@ -55,9 +54,8 @@ func WithLogDir(dir string) FileWriterOption {
 	})
 }
 
-// --------------------------------------------------------------------------------
 type FileWriter struct {
-	level    int
+	level    Level
 	dir      string
 	filename string
 	maxSize  int64
@@ -69,7 +67,7 @@ type FileWriter struct {
 	w        bufio.Writer
 }
 
-func NewFileWriter(level int, opts ...FileWriterOption) *FileWriter {
+func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
 	var fw = &FileWriter{}
 	fw.level = level
 	fw.dir = kLogDir
@@ -138,12 +136,12 @@ func (this *FileWriter) close() error {
 	return err
 }
 
-func (this *FileWriter) Level() int {
+func (this *FileWriter) Level() Level {
 	return this.level
 }
 
-func (this *FileWriter) WriteMessage(logTime time.Time, service, instance, prefix, timeStr string, level int, levelName, file string, line int, msg string) {
-	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, timeStr, levelName, file, line, msg)
+func (this *FileWriter) WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
+	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, logTime, LevelNames[level], file, line, msg)
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
