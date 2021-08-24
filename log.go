@@ -1,6 +1,7 @@
 package log4go
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -83,55 +84,55 @@ type Logger interface {
 	DisablePath()
 	PrintPath() bool
 
-	WriteMessage(callDepth int, level Level, msg string)
+	WriteMessage(ctx context.Context, callDepth int, level Level, msg string)
 
 	AddWriter(name string, w Writer)
 	RemoveWriter(name string)
 
-	Logf(format string, args ...interface{})
-	Logln(args ...interface{})
-	Log(args ...interface{})
-	L(format string, args ...interface{})
+	Logf(ctx context.Context, format string, args ...interface{})
+	Logln(ctx context.Context, args ...interface{})
+	Log(ctx context.Context, args ...interface{})
+	L(ctx context.Context, format string, args ...interface{})
 
-	Tracef(format string, args ...interface{})
-	Traceln(args ...interface{})
-	Trace(args ...interface{})
-	T(format string, args ...interface{})
+	Tracef(ctx context.Context, format string, args ...interface{})
+	Traceln(ctx context.Context, args ...interface{})
+	Trace(ctx context.Context, args ...interface{})
+	T(ctx context.Context, format string, args ...interface{})
 
-	Printf(format string, args ...interface{})
-	Println(args ...interface{})
-	Print(args ...interface{})
-	P(format string, args ...interface{})
+	Printf(ctx context.Context, format string, args ...interface{})
+	Println(ctx context.Context, args ...interface{})
+	Print(ctx context.Context, args ...interface{})
+	P(ctx context.Context, format string, args ...interface{})
 
-	Debugf(format string, args ...interface{})
-	Debugln(args ...interface{})
-	Debug(args ...interface{})
-	D(format string, args ...interface{})
+	Debugf(ctx context.Context, format string, args ...interface{})
+	Debugln(ctx context.Context, args ...interface{})
+	Debug(ctx context.Context, args ...interface{})
+	D(ctx context.Context, format string, args ...interface{})
 
-	Infof(format string, args ...interface{})
-	Infoln(args ...interface{})
-	Info(args ...interface{})
-	I(format string, args ...interface{})
+	Infof(ctx context.Context, format string, args ...interface{})
+	Infoln(ctx context.Context, args ...interface{})
+	Info(ctx context.Context, args ...interface{})
+	I(ctx context.Context, format string, args ...interface{})
 
-	Warnf(format string, args ...interface{})
-	Warnln(args ...interface{})
-	Warn(args ...interface{})
-	W(format string, args ...interface{})
+	Warnf(ctx context.Context, format string, args ...interface{})
+	Warnln(ctx context.Context, args ...interface{})
+	Warn(ctx context.Context, args ...interface{})
+	W(ctx context.Context, format string, args ...interface{})
 
-	Errorf(format string, args ...interface{})
-	Errorln(args ...interface{})
-	Error(args ...interface{})
-	E(format string, args ...interface{})
+	Errorf(ctx context.Context, format string, args ...interface{})
+	Errorln(ctx context.Context, args ...interface{})
+	Error(ctx context.Context, args ...interface{})
+	E(ctx context.Context, format string, args ...interface{})
 
-	Panicf(format string, args ...interface{})
-	Panicln(args ...interface{})
-	Panic(args ...interface{})
+	Panicf(ctx context.Context, format string, args ...interface{})
+	Panicln(ctx context.Context, args ...interface{})
+	Panic(ctx context.Context, args ...interface{})
 
-	Fatalf(format string, args ...interface{})
-	Fatalln(args ...interface{})
-	Fatal(args ...interface{})
+	Fatalf(ctx context.Context, format string, args ...interface{})
+	Fatalln(ctx context.Context, args ...interface{})
+	Fatal(ctx context.Context, args ...interface{})
 
-	Output(callDepth int, s string) error
+	Output(ctx context.Context, callDepth int, s string) error
 }
 
 type Writer interface {
@@ -139,7 +140,7 @@ type Writer interface {
 
 	Level() Level
 
-	WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string)
+	WriteMessage(logId, service, instance, prefix, logTime string, level Level, file string, line int, msg string)
 }
 
 type logger struct {
@@ -249,7 +250,7 @@ func (this *logger) PrintPath() bool {
 	return this.printPath
 }
 
-func (this *logger) WriteMessage(callDepth int, level Level, msg string) {
+func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level, msg string) {
 	this.mu.Lock()
 	defer this.mu.Unlock()
 
@@ -276,9 +277,11 @@ func (this *logger) WriteMessage(callDepth int, level Level, msg string) {
 	var now = time.Now()
 	var logTime = now.Format("2006/01/02 15:04:05.000000")
 
+	var logId = getId(ctx)
+
 	for _, w := range this.writers {
 		if w.Level() <= level {
-			w.WriteMessage(this.service, this.instance, this.prefix, logTime, level, file, line, msg)
+			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, line, msg)
 		}
 	}
 }
@@ -299,157 +302,157 @@ func (this *logger) RemoveWriter(name string) {
 	delete(this.writers, name)
 }
 
-func (this *logger) Logf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) Logf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Logln(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Logln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) Log(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Log(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) L(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) L(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Tracef(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) Tracef(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Traceln(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Traceln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) Trace(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Trace(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) T(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) T(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Printf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) Printf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Println(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Println(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) Print(args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func (this *logger) Print(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func (this *logger) P(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func (this *logger) P(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Debugf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+func (this *logger) Debugf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Debugln(args ...interface{}) {
-	this.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+func (this *logger) Debugln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintln(args...))
 }
 
-func (this *logger) Debug(args ...interface{}) {
-	this.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+func (this *logger) Debug(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintln(args...))
 }
 
-func (this *logger) D(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+func (this *logger) D(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Infof(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+func (this *logger) Infof(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Infoln(args ...interface{}) {
-	this.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+func (this *logger) Infoln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintln(args...))
 }
 
-func (this *logger) Info(args ...interface{}) {
-	this.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+func (this *logger) Info(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintln(args...))
 }
 
-func (this *logger) I(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+func (this *logger) I(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Warnf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+func (this *logger) Warnf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Warnln(args ...interface{}) {
-	this.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+func (this *logger) Warnln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintln(args...))
 }
 
-func (this *logger) Warn(args ...interface{}) {
-	this.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+func (this *logger) Warn(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintln(args...))
 }
 
-func (this *logger) W(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+func (this *logger) W(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
-func (this *logger) Errorf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+func (this *logger) Errorf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelError, fmt.Sprintf(format, args...))
 	os.Exit(-1)
 }
 
-func (this *logger) Errorln(args ...interface{}) {
-	this.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+func (this *logger) Errorln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelError, fmt.Sprintln(args...))
 	os.Exit(-1)
 }
 
-func (this *logger) Error(args ...interface{}) {
-	this.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+func (this *logger) Error(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelError, fmt.Sprintln(args...))
 	os.Exit(-1)
 }
 
-func (this *logger) E(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+func (this *logger) E(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelError, fmt.Sprintf(format, args...))
 	os.Exit(-1)
 }
 
-func (this *logger) Panicf(format string, args ...interface{}) {
+func (this *logger) Panicf(ctx context.Context, format string, args ...interface{}) {
 	var msg = fmt.Sprintf(format, args...)
-	this.WriteMessage(2, LevelPanic, msg)
+	this.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func (this *logger) Panicln(args ...interface{}) {
+func (this *logger) Panicln(ctx context.Context, args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	this.WriteMessage(2, LevelPanic, msg)
+	this.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func (this *logger) Panic(args ...interface{}) {
+func (this *logger) Panic(ctx context.Context, args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	this.WriteMessage(2, LevelPanic, msg)
+	this.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func (this *logger) Fatalf(format string, args ...interface{}) {
-	this.WriteMessage(2, LevelFatal, fmt.Sprintf(format, args...))
+func (this *logger) Fatalf(ctx context.Context, format string, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintf(format, args...))
 	//os.Exit(-1)
 }
 
-func (this *logger) Fatalln(args ...interface{}) {
-	this.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+func (this *logger) Fatalln(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintln(args...))
 	//os.Exit(-1)
 }
 
-func (this *logger) Fatal(args ...interface{}) {
-	this.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+func (this *logger) Fatal(ctx context.Context, args ...interface{}) {
+	this.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintln(args...))
 	//os.Exit(-1)
 }
 
-func (this *logger) Output(callDepth int, s string) error {
-	this.WriteMessage(callDepth+1, LevelTrace, s)
+func (this *logger) Output(ctx context.Context, callDepth int, s string) error {
+	this.WriteMessage(ctx, callDepth+1, LevelTrace, s)
 	return nil
 }
 
@@ -483,152 +486,152 @@ func RemoveWriter(name string) {
 	sharedLogger.RemoveWriter(name)
 }
 
-func Logf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func Logf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Logln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Logln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func Log(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Log(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func L(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func L(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Tracef(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func Tracef(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Traceln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Traceln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func Trace(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Trace(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func T(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func T(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Printf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func Printf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Println(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Println(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func Print(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintln(args...))
+func Print(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintln(args...))
 }
 
-func P(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelTrace, fmt.Sprintf(format, args...))
+func P(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelTrace, fmt.Sprintf(format, args...))
 }
 
-func Debugf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+func Debugf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
-func Debugln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+func Debugln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintln(args...))
 }
 
-func Debug(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelDebug, fmt.Sprintln(args...))
+func Debug(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintln(args...))
 }
 
-func D(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelDebug, fmt.Sprintf(format, args...))
+func D(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelDebug, fmt.Sprintf(format, args...))
 }
 
-func Infof(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+func Infof(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
-func Infoln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+func Infoln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintln(args...))
 }
 
-func Info(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelInfo, fmt.Sprintln(args...))
+func Info(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintln(args...))
 }
 
-func I(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelInfo, fmt.Sprintf(format, args...))
+func I(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelInfo, fmt.Sprintf(format, args...))
 }
 
-func Errorf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+func Errorf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelError, fmt.Sprintf(format, args...))
 }
 
-func Errorln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+func Errorln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelError, fmt.Sprintln(args...))
 }
 
-func Error(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelError, fmt.Sprintln(args...))
+func Error(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelError, fmt.Sprintln(args...))
 }
 
-func E(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelError, fmt.Sprintf(format, args...))
+func E(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelError, fmt.Sprintf(format, args...))
 }
 
-func Warnf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+func Warnf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
-func Warnln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+func Warnln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintln(args...))
 }
 
-func Warn(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelWarning, fmt.Sprintln(args...))
+func Warn(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintln(args...))
 }
 
-func W(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelWarning, fmt.Sprintf(format, args...))
+func W(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelWarning, fmt.Sprintf(format, args...))
 }
 
-func Panicf(format string, args ...interface{}) {
+func Panicf(ctx context.Context, format string, args ...interface{}) {
 	var msg = fmt.Sprintf(format, args...)
-	sharedLogger.WriteMessage(2, LevelPanic, msg)
+	sharedLogger.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func Panicln(args ...interface{}) {
+func Panicln(ctx context.Context, args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	sharedLogger.WriteMessage(2, LevelPanic, msg)
+	sharedLogger.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func Panic(args ...interface{}) {
+func Panic(ctx context.Context, args ...interface{}) {
 	var msg = fmt.Sprintln(args...)
-	sharedLogger.WriteMessage(2, LevelPanic, msg)
+	sharedLogger.WriteMessage(ctx, 2, LevelPanic, msg)
 	panic(msg)
 }
 
-func Fatalf(format string, args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelFatal, fmt.Sprintf(format, args...))
-	os.Exit(-1)
-}
-
-func Fatalln(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+func Fatalf(ctx context.Context, format string, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintf(format, args...))
 	//os.Exit(-1)
 }
 
-func Fatal(args ...interface{}) {
-	sharedLogger.WriteMessage(2, LevelFatal, fmt.Sprintln(args...))
+func Fatalln(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintln(args...))
 	//os.Exit(-1)
 }
 
-func Output(callDepth int, s string) error {
-	sharedLogger.WriteMessage(callDepth+1, LevelTrace, s)
+func Fatal(ctx context.Context, args ...interface{}) {
+	sharedLogger.WriteMessage(ctx, 2, LevelFatal, fmt.Sprintln(args...))
+	//os.Exit(-1)
+}
+
+func Output(ctx context.Context, callDepth int, s string) error {
+	sharedLogger.WriteMessage(ctx, callDepth+1, LevelTrace, s)
 	return nil
 }

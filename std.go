@@ -97,10 +97,10 @@ func (this *StdWriter) Level() Level {
 	return this.level
 }
 
-func (this *StdWriter) WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
+func (this *StdWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
 	var levelName = LevelNames[level]
 	if this.enableColor {
 		levelName = levelColors[level]
 	}
-	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, logTime, levelName, file, line, msg)
+	fmt.Fprintf(this, "[%s] %s%s%s%s %s %s:%d %s", logId, service, instance, prefix, logTime, levelName, file, line, msg)
 }

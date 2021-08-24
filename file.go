@@ -140,8 +140,8 @@ func (this *FileWriter) Level() Level {
 	return this.level
 }
 
-func (this *FileWriter) WriteMessage(service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
-	fmt.Fprintf(this, "%s%s%s%s %s %s:%d %s", service, instance, prefix, logTime, LevelNames[level], file, line, msg)
+func (this *FileWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file string, line int, msg string) {
+	fmt.Fprintf(this, "[%s] %s%s%s%s %s %s:%d %s", logId, service, instance, prefix, logTime, LevelNames[level], file, line, msg)
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
