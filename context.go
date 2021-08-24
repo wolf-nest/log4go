@@ -8,7 +8,7 @@ import (
 
 type logIdKey struct{}
 
-func WithContext(ctx context.Context) context.Context {
+func NewContext(ctx context.Context) context.Context {
 	if ctx == nil {
 		ctx = context.TODO()
 	}

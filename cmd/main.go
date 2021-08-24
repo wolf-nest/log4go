@@ -11,7 +11,7 @@ func main() {
 		}
 	}()
 
-	var ctx = log4go.WithContext(context.TODO())
+	var ctx = log4go.NewContext(context.TODO())
 
 	ctx = log4go.WithId(ctx, "")
 
