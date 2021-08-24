@@ -20,7 +20,7 @@ func NewContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func getId(ctx context.Context) string {
+func MustGetId(ctx context.Context) string {
 	var logId = GetId(ctx)
 	if logId == "" {
 		logId = uuid.NewString()
