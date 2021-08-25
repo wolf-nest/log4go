@@ -457,13 +457,10 @@ func (this *logger) Output(ctx context.Context, callDepth int, s string) error {
 }
 
 var sharedLogger Logger
-var once sync.Once
 
 func init() {
-	once.Do(func() {
-		sharedLogger = New()
-		sharedLogger.AddWriter("stdout", NewStdWriter(LevelTrace))
-	})
+	sharedLogger = New()
+	sharedLogger.AddWriter("stdout", NewStdWriter(LevelTrace))
 }
 
 func SharedLogger() Logger {
