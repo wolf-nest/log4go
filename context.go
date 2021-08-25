@@ -20,7 +20,7 @@ func NewContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func ContextWithId(ctx context.Context, logId string) context.Context {
+func ContextWithLogId(ctx context.Context, logId string) context.Context {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
@@ -31,15 +31,15 @@ func ContextWithId(ctx context.Context, logId string) context.Context {
 	return context.WithValue(ctx, logIdKey{}, logId)
 }
 
-func MustGetId(ctx context.Context) string {
-	var logId = GetId(ctx)
+func MustGetLogId(ctx context.Context) string {
+	var logId = GetLogId(ctx)
 	if logId == "" {
 		logId = uuid.NewString()
 	}
 	return logId
 }
 
-func GetId(ctx context.Context) string {
+func GetLogId(ctx context.Context) string {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
