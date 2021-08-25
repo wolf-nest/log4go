@@ -13,7 +13,7 @@ func main() {
 
 	var ctx = log4go.NewContext(context.TODO())
 
-	ctx = log4go.WithId(ctx, "")
+	ctx = log4go.ContextWithId(ctx, "")
 
 	log4go.Traceln(ctx, "https://github.com/smartwalle?tab=repositories")
 	log4go.Println(ctx, "https://github.com/smartwalle?tab=repositories")

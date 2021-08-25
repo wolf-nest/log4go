@@ -20,7 +20,7 @@ func NewContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func WithId(ctx context.Context, logId string) context.Context {
+func ContextWithId(ctx context.Context, logId string) context.Context {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
