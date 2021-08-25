@@ -277,7 +277,7 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 	var now = time.Now()
 	var logTime = now.Format("2006/01/02 15:04:05.000000")
 
-	var logId = MustGetLogId(ctx)
+	var logId = MustGetId(ctx)
 
 	for _, w := range this.writers {
 		if w.Level() <= level {
