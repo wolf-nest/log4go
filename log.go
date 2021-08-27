@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -268,9 +269,8 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 	}
 
 	if this.printStack && level >= this.stackLevel {
-		var buf [4096]byte
-		n := runtime.Stack(buf[:], true)
-		msg += string(buf[:n])
+		var buf = debug.Stack()
+		msg += string(buf)
 		msg += "\n"
 	}
 
