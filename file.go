@@ -1,19 +1,29 @@
 package log4go
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
+var (
+	ErrFileClosed     = errors.New("file already closed")
+	ErrFileBufferFull = errors.New("file buffer is full")
+)
+
 const (
-	kLogDir     = "./logs"
-	kLogFile    = "temp_log.log"
-	kLogFileExt = ".log"
+	kLogDir       = "./logs"
+	kLogFile      = "temp_log.log"
+	kLogFileExt   = ".log"
+	kBuffChanSize = 1024 * 10
+	kMaxFileSize  = 1024 * 1024 * 10
 )
 
 type FileWriterOption interface {
@@ -53,27 +63,90 @@ func WithLogDir(dir string) FileWriterOption {
 	})
 }
 
-type FileWriter struct {
-	level    Level
-	dir      string
-	filename string
-	maxSize  int64
-	maxAge   int64
-	size     int64
-	mu       sync.Mutex
-	cmu      sync.Mutex
-	file     *os.File
-
-	closed int32
-	wg     sync.WaitGroup
+func WithBuffChanSize(size int) FileWriterOption {
+	return fwOptionFunc(func(w *FileWriter) {
+		if size <= 0 {
+			size = kBuffChanSize
+		}
+		w.buffChanSize = size
+	})
 }
 
-func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
+type File struct {
+	size int64
+	file *os.File
+}
+
+func CreateFile(filename string) (*File, error) {
+	var f, err = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	return &File{
+		size: 0,
+		file: f,
+	}, nil
+}
+
+func OpenFile(filename string) (*File, error) {
+	var f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	return &File{
+		size: stat.Size(),
+		file: f,
+	}, nil
+}
+
+func (this *File) Size() int64 {
+	return this.size
+}
+
+func (this *File) Write(p []byte) (n int, err error) {
+	n, err = this.file.Write(p)
+	this.size += int64(n)
+	return n, err
+}
+
+func (this *File) Close() (err error) {
+	if this.file != nil {
+		err = this.file.Close()
+	}
+	this.size = 0
+	return err
+}
+
+type FileWriter struct {
+	level        Level
+	dir          string
+	filename     string
+	maxSize      int64
+	maxAge       int64
+	buffChanSize int
+
+	file     *File
+	pool     *sync.Pool
+	buffChan chan *bytes.Buffer
+	closed   int32
+	wg       *sync.WaitGroup
+}
+
+func NewFileWriter2(level Level, opts ...FileWriterOption) *FileWriter {
 	var w = &FileWriter{}
 	w.level = level
 	w.dir = kLogDir
-	w.maxSize = 10 * 1024 * 1024
+	w.maxSize = kMaxFileSize
 	w.maxAge = 0
+	w.buffChanSize = kBuffChanSize
+
 	for _, opt := range opts {
 		opt.Apply(w)
 	}
@@ -81,49 +154,87 @@ func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
 	if err := os.MkdirAll(w.dir, 0755); err != nil {
 		return nil
 	}
+	w.pool = &sync.Pool{New: func() interface{} { return &bytes.Buffer{} }}
+	w.buffChan = make(chan *bytes.Buffer, w.buffChanSize)
 	w.filename = path.Join(w.dir, kLogFile)
-
+	w.closed = 0
+	w.wg = &sync.WaitGroup{}
+	w.wg.Add(1)
+	go w.daemon()
 	return w
 }
 
-func (this *FileWriter) SetMaxSize(mb int) {
-	this.maxSize = int64(mb) * 1024 * 1024
+func (this *FileWriter) getBuffer() *bytes.Buffer {
+	return this.pool.Get().(*bytes.Buffer)
 }
 
-func (this *FileWriter) SetMaxAge(sec int64) {
-	this.maxAge = sec
+func (this *FileWriter) putBuffer(buf *bytes.Buffer) {
+	buf.Reset()
+	this.pool.Put(buf)
 }
 
-func (this *FileWriter) Write(p []byte) (n int, err error) {
-	if len(p) == 0 {
-		return 0, nil
+func (this *FileWriter) Level() Level {
+	return this.level
+}
+
+func (this *FileWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string) {
+	if atomic.LoadInt32(&this.closed) == 1 {
+		return
 	}
+	var buf = this.getBuffer()
+	buf.WriteByte('[')
+	buf.WriteString(logId)
+	buf.WriteByte(']')
+	buf.WriteByte(' ')
+	buf.WriteString(service)
+	buf.WriteString(instance)
+	buf.WriteString(prefix)
+	buf.WriteString(logTime)
+	buf.WriteByte(' ')
+	buf.WriteString(LevelNames[level])
+	buf.WriteByte(' ')
+	buf.WriteString(file)
+	buf.WriteString(":")
+	buf.WriteString(line)
+	buf.WriteString(" ")
+	buf.WriteString(msg)
 
-	this.mu.Lock()
-	defer this.mu.Unlock()
+	this.buffChan <- buf
 
-	pLen := int64(len(p))
-	if this.file == nil {
-		if err = this.openOrCreate(pLen); err != nil {
-			return 0, err
-		}
+	//select {
+	//case this.buffChan <- buf:
+	//	return
+	//default:
+	//	this.putBuffer(buf)
+	//}
+}
+
+func (this *FileWriter) Write(p []byte) (int, error) {
+	if atomic.LoadInt32(&this.closed) == 1 {
+		return 0, ErrFileClosed
 	}
+	var buf = this.getBuffer()
+	buf.Write(p)
 
-	if this.size+pLen >= this.maxSize {
-		if err := this.rotate(); err != nil {
-			return 0, err
-		}
-	}
+	this.buffChan <- buf
+	return len(p), nil
 
-	n, err = this.file.Write(p)
-	this.size += int64(n)
-
-	return n, err
+	//select {
+	//case this.buffChan <- buf:
+	//	return len(p), nil
+	//default:
+	//	this.putBuffer(buf)
+	//	return 0, ErrFileBufferFull
+	//}
 }
 
 func (this *FileWriter) Close() error {
-	this.mu.Lock()
-	defer this.mu.Unlock()
+	if atomic.CompareAndSwapInt32(&this.closed, 0, 1) == false {
+		this.wg.Wait()
+		return nil
+	}
+	close(this.buffChan)
+	this.wg.Wait()
 	return this.close()
 }
 
@@ -133,16 +244,51 @@ func (this *FileWriter) close() error {
 		err = this.file.Close()
 	}
 	this.file = nil
-	this.size = 0
 	return err
 }
 
-func (this *FileWriter) Level() Level {
-	return this.level
+func (this *FileWriter) daemon() {
+	for {
+		select {
+		case buf, ok := <-this.buffChan:
+			if ok {
+				this.write(buf.Bytes())
+				this.putBuffer(buf)
+			}
+		}
+
+		if atomic.LoadInt32(&this.closed) == 0 {
+			continue
+		}
+
+		for buf := range this.buffChan {
+			this.write(buf.Bytes())
+			this.putBuffer(buf)
+		}
+		break
+	}
+	this.wg.Done()
 }
 
-func (this *FileWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string) {
-	fmt.Fprintf(this, "[%s] %s%s%s%s %s %s:%s %s", logId, service, instance, prefix, logTime, LevelNames[level], file, line, msg)
+func (this *FileWriter) write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
+	pLen := int64(len(p))
+	if this.file == nil {
+		if err = this.openOrCreate(pLen); err != nil {
+			return 0, err
+		}
+	}
+
+	if this.file.size+pLen >= this.maxSize {
+		if err := this.rotate(); err != nil {
+			return 0, err
+		}
+	}
+
+	return this.file.Write(p)
 }
 
 func (this *FileWriter) openOrCreate(pLen int64) error {
@@ -164,25 +310,21 @@ func (this *FileWriter) openOrCreate(pLen int64) error {
 	}
 
 	// 打开现有的文件
-	file, err := os.OpenFile(this.filename, os.O_APPEND|os.O_WRONLY, 0777)
+	file, err := OpenFile(this.filename)
 	if err != nil {
 		// 如果打开文件出错，则创建新的文件
 		return this.create()
 	}
-
 	this.file = file
-	this.size = info.Size()
-
 	return nil
 }
 
 func (this *FileWriter) create() error {
-	file, err := os.OpenFile(this.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	file, err := CreateFile(this.filename)
 	if err != nil {
 		return err
 	}
 	this.file = file
-	this.size = 0
 	return nil
 }
 
@@ -218,9 +360,8 @@ func (this *FileWriter) clean() {
 	if this.maxAge <= 0 {
 		return
 	}
-	this.cmu.Lock()
+	this.wg.Add(1)
 	go func() {
-		defer this.cmu.Unlock()
 		var dir = filepath.Dir(this.dir)
 		filepath.Walk(dir, func(path string, info os.FileInfo, err error) (rErr error) {
 			defer func() {
@@ -235,5 +376,6 @@ func (this *FileWriter) clean() {
 			}
 			return rErr
 		})
+		this.wg.Done()
 	}()
 }

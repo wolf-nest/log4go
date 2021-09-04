@@ -13,11 +13,11 @@ var ZapLogger *zap.Logger
 
 func main() {
 	hook := lumberjack.Logger{
-		Filename:   "./logs/xx.log", // 日志文件路径
-		MaxSize:    10,              // 每个日志文件保存的大小 单位:M
-		MaxAge:     7,               // 文件最多保存多少天
-		MaxBackups: 30,              // 日志文件最多保存多少个备份
-		Compress:   false,           // 是否压缩
+		Filename:   "./logs/temp_log.log", // 日志文件路径
+		MaxSize:    10,                    // 每个日志文件保存的大小 单位:M
+		MaxAge:     7,                     // 文件最多保存多少天
+		MaxBackups: 30,                    // 日志文件最多保存多少个备份
+		Compress:   false,                 // 是否压缩
 	}
 	encoderConfig := zapcore.EncoderConfig{
 		MessageKey:     "msg",
@@ -37,10 +37,6 @@ func main() {
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zap.DebugLevel)
 	var writes = []zapcore.WriteSyncer{zapcore.AddSync(&hook)}
-	// 如果是开发环境，同时在控制台上也输出
-	//if debug {
-	//	writes = append(writes, zapcore.AddSync(os.Stdout))
-	//}
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig),
 		zapcore.NewMultiWriteSyncer(writes...),

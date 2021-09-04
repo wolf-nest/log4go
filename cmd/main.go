@@ -15,11 +15,10 @@ func main() {
 	}()
 
 	var file = log4go.NewFileWriter2(log4go.LevelTrace)
-	//log4go.AddWriter("file", file)
+	log4go.AddWriter("file", file)
 	log4go.RemoveWriter("stdout")
 
 	//var ctx = log4go.NewContext(context.TODO())
-
 	//ctx = log4go.ContextWithId(ctx, "")
 
 	//log4go.Traceln(ctx, "https://github.com/smartwalle?tab=repositories")
