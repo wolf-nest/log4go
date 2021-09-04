@@ -1,7 +1,6 @@
 package log4go
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path"
@@ -64,7 +63,6 @@ type FileWriter struct {
 	mu       sync.Mutex
 	cmu      sync.Mutex
 	file     *os.File
-	w        bufio.Writer
 }
 
 func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
