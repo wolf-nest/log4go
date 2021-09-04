@@ -8,10 +8,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	//var file = log4go.NewFileWriter2(log4go.LevelTrace)
-	//log4go.AddWriter("file", file)
-	//log4go.RemoveWriter("stdout")
-	//log4go.SharedLogger()
+	var file = log4go.NewFileWriter2(log4go.LevelTrace)
+	log4go.AddWriter("file", file)
+	log4go.RemoveWriter("stdout")
+	log4go.SharedLogger()
 	os.Exit(m.Run())
 }
 
