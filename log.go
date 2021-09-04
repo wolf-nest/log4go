@@ -88,6 +88,8 @@ type Logger interface {
 
 	WriteMessage(ctx context.Context, callDepth int, level Level, msg string)
 
+	Sync() error
+
 	AddWriter(name string, w Writer)
 	RemoveWriter(name string)
 
@@ -141,6 +143,8 @@ type Writer interface {
 	io.Closer
 
 	Level() Level
+
+	Sync() error
 
 	WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string)
 }
@@ -286,6 +290,17 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, lineStr, msg)
 		}
 	}
+}
+
+func (this *logger) Sync() error {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	for _, w := range this.writers {
+		if err := w.Sync(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (this *logger) AddWriter(name string, w Writer) {
@@ -483,6 +498,10 @@ func AddWriter(name string, w Writer) {
 
 func RemoveWriter(name string) {
 	sharedLogger.RemoveWriter(name)
+}
+
+func Sync() error {
+	return sharedLogger.Sync()
 }
 
 func Logf(ctx context.Context, format string, args ...interface{}) {

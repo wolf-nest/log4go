@@ -41,6 +41,6 @@ func main() {
 	}()
 	wg.Wait()
 	fmt.Println(time.Now().Sub(begin))
-	file.Close()
+	log4go.Sync()
 	fmt.Println(time.Now().Sub(begin))
 }

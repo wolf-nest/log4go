@@ -3,7 +3,6 @@ package log4go
 import (
 	"fmt"
 	"github.com/mattn/go-isatty"
-	"io"
 	"os"
 )
 
@@ -62,7 +61,7 @@ var (
 
 type StdWriter struct {
 	level       Level
-	out         io.Writer
+	out         *os.File
 	enableColor bool
 }
 
@@ -71,7 +70,7 @@ func NewStdWriter(level Level) *StdWriter {
 	w.level = level
 	w.out = os.Stdout
 	w.enableColor = true
-	if f, ok := w.out.(*os.File); !ok || (os.Getenv("TERM") == "dumb" || (!isatty.IsTerminal(f.Fd()) && !isatty.IsCygwinTerminal(f.Fd()))) {
+	if os.Getenv("TERM") == "dumb" || (!isatty.IsTerminal(w.out.Fd()) && !isatty.IsCygwinTerminal(w.out.Fd())) {
 		w.enableColor = false
 	}
 	return w
@@ -87,6 +86,10 @@ func (this *StdWriter) Close() error {
 
 func (this *StdWriter) Level() Level {
 	return this.level
+}
+
+func (this *StdWriter) Sync() error {
+	return this.out.Sync()
 }
 
 func (this *StdWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string) {

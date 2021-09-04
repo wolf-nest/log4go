@@ -135,8 +135,10 @@ type FileWriter struct {
 	file     *File
 	pool     *sync.Pool
 	buffChan chan *bytes.Buffer
+	sync     chan struct{}
+	syncWg   sync.WaitGroup
 	closed   int32
-	wg       *sync.WaitGroup
+	wg       sync.WaitGroup
 }
 
 func NewFileWriter2(level Level, opts ...FileWriterOption) *FileWriter {
@@ -156,9 +158,9 @@ func NewFileWriter2(level Level, opts ...FileWriterOption) *FileWriter {
 	}
 	w.pool = &sync.Pool{New: func() interface{} { return &bytes.Buffer{} }}
 	w.buffChan = make(chan *bytes.Buffer, w.buffChanSize)
+	w.sync = make(chan struct{}, 1)
 	w.filename = path.Join(w.dir, kLogFile)
 	w.closed = 0
-	w.wg = &sync.WaitGroup{}
 	w.wg.Add(1)
 	go w.daemon()
 	return w
@@ -173,8 +175,37 @@ func (this *FileWriter) putBuffer(buf *bytes.Buffer) {
 	this.pool.Put(buf)
 }
 
+func (this *FileWriter) Close() error {
+	if atomic.CompareAndSwapInt32(&this.closed, 0, 1) == false {
+		this.wg.Wait()
+		return nil
+	}
+	close(this.buffChan)
+	this.wg.Wait()
+	return this.close()
+}
+
+func (this *FileWriter) close() error {
+	var err error
+	if this.file != nil {
+		err = this.file.Close()
+	}
+	this.file = nil
+	return err
+}
+
 func (this *FileWriter) Level() Level {
 	return this.level
+}
+
+func (this *FileWriter) Sync() error {
+	if atomic.LoadInt32(&this.closed) == 1 {
+		return ErrFileClosed
+	}
+	this.syncWg.Add(1)
+	this.sync <- struct{}{}
+	this.syncWg.Wait()
+	return nil
 }
 
 func (this *FileWriter) WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string) {
@@ -199,6 +230,7 @@ func (this *FileWriter) WriteMessage(logId, service, instance, prefix, logTime s
 	buf.WriteString(" ")
 	buf.WriteString(msg)
 
+	this.syncWg.Wait()
 	this.buffChan <- buf
 
 	//select {
@@ -216,6 +248,7 @@ func (this *FileWriter) Write(p []byte) (int, error) {
 	var buf = this.getBuffer()
 	buf.Write(p)
 
+	this.syncWg.Wait()
 	this.buffChan <- buf
 	return len(p), nil
 
@@ -228,46 +261,38 @@ func (this *FileWriter) Write(p []byte) (int, error) {
 	//}
 }
 
-func (this *FileWriter) Close() error {
-	if atomic.CompareAndSwapInt32(&this.closed, 0, 1) == false {
-		this.wg.Wait()
-		return nil
-	}
-	close(this.buffChan)
-	this.wg.Wait()
-	return this.close()
-}
-
-func (this *FileWriter) close() error {
-	var err error
-	if this.file != nil {
-		err = this.file.Close()
-	}
-	this.file = nil
-	return err
-}
-
 func (this *FileWriter) daemon() {
+	defer this.wg.Done()
 	for {
 		select {
-		case buf, ok := <-this.buffChan:
-			if ok {
+		case <-this.sync:
+			close(this.buffChan)
+			for buf := range this.buffChan {
 				this.write(buf.Bytes())
 				this.putBuffer(buf)
 			}
-		}
+			this.buffChan = make(chan *bytes.Buffer, this.buffChanSize)
+			this.syncWg.Done()
+		default:
+			select {
+			case buf, ok := <-this.buffChan:
+				if ok {
+					this.write(buf.Bytes())
+					this.putBuffer(buf)
+				}
+			}
 
-		if atomic.LoadInt32(&this.closed) == 0 {
-			continue
-		}
+			if atomic.LoadInt32(&this.closed) == 0 {
+				continue
+			}
 
-		for buf := range this.buffChan {
-			this.write(buf.Bytes())
-			this.putBuffer(buf)
+			for buf := range this.buffChan {
+				this.write(buf.Bytes())
+				this.putBuffer(buf)
+			}
+			return
 		}
-		break
 	}
-	this.wg.Done()
 }
 
 func (this *FileWriter) write(p []byte) (n int, err error) {
