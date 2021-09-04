@@ -68,21 +68,21 @@ type FileWriter struct {
 }
 
 func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
-	var fw = &FileWriter{}
-	fw.level = level
-	fw.dir = kLogDir
-	fw.maxSize = 10 * 1024 * 1024
-	fw.maxAge = 0
+	var w = &FileWriter{}
+	w.level = level
+	w.dir = kLogDir
+	w.maxSize = 10 * 1024 * 1024
+	w.maxAge = 0
 	for _, opt := range opts {
-		opt.Apply(fw)
+		opt.Apply(w)
 	}
 
-	if err := os.MkdirAll(fw.dir, 0744); err != nil {
+	if err := os.MkdirAll(w.dir, 0744); err != nil {
 		return nil
 	}
-	fw.filename = path.Join(fw.dir, kLogFile)
+	w.filename = path.Join(w.dir, kLogFile)
 
-	return fw
+	return w
 }
 
 func (this *FileWriter) SetMaxSize(mb int) {

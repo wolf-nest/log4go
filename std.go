@@ -5,7 +5,6 @@ import (
 	"github.com/mattn/go-isatty"
 	"io"
 	"os"
-	"sync"
 )
 
 //30 black		黑色
@@ -64,28 +63,21 @@ var (
 type StdWriter struct {
 	level       Level
 	out         io.Writer
-	mutex       sync.Mutex
 	enableColor bool
 }
 
 func NewStdWriter(level Level) *StdWriter {
-	var sw = &StdWriter{}
-	sw.level = level
-	sw.out = os.Stdout
-	sw.enableColor = true
-	if w, ok := sw.out.(*os.File); !ok || (os.Getenv("TERM") == "dumb" || (!isatty.IsTerminal(w.Fd()) && !isatty.IsCygwinTerminal(w.Fd()))) {
-		sw.enableColor = false
+	var w = &StdWriter{}
+	w.level = level
+	w.out = os.Stdout
+	w.enableColor = true
+	if f, ok := w.out.(*os.File); !ok || (os.Getenv("TERM") == "dumb" || (!isatty.IsTerminal(f.Fd()) && !isatty.IsCygwinTerminal(f.Fd()))) {
+		w.enableColor = false
 	}
-	return sw
+	return w
 }
 
 func (this *StdWriter) Write(p []byte) (n int, err error) {
-	if len(p) == 0 {
-		return 0, nil
-	}
-
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
 	return this.out.Write(p)
 }
 
