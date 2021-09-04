@@ -268,6 +268,7 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 		file = "???"
 		line = -1
 	}
+	var lineStr = strconv.Itoa(line)
 
 	if this.printStack && level >= this.stackLevel {
 		var buf = debug.Stack()
@@ -282,7 +283,7 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 
 	for _, w := range this.writers {
 		if w.Level() <= level {
-			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, strconv.Itoa(line), msg)
+			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, lineStr, msg)
 		}
 	}
 }
