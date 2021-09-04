@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -137,11 +138,11 @@ type Logger interface {
 }
 
 type Writer interface {
-	io.WriteCloser
+	io.Closer
 
 	Level() Level
 
-	WriteMessage(logId, service, instance, prefix, logTime string, level Level, file string, line int, msg string)
+	WriteMessage(logId, service, instance, prefix, logTime string, level Level, file, line, msg string)
 }
 
 type logger struct {
@@ -281,7 +282,7 @@ func (this *logger) WriteMessage(ctx context.Context, callDepth int, level Level
 
 	for _, w := range this.writers {
 		if w.Level() <= level {
-			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, line, msg)
+			w.WriteMessage(logId, this.service, this.instance, this.prefix, logTime, level, file, strconv.Itoa(line), msg)
 		}
 	}
 }
