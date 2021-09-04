@@ -63,6 +63,9 @@ type FileWriter struct {
 	mu       sync.Mutex
 	cmu      sync.Mutex
 	file     *os.File
+
+	closed int32
+	wg     sync.WaitGroup
 }
 
 func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
@@ -75,7 +78,7 @@ func NewFileWriter(level Level, opts ...FileWriterOption) *FileWriter {
 		opt.Apply(w)
 	}
 
-	if err := os.MkdirAll(w.dir, 0744); err != nil {
+	if err := os.MkdirAll(w.dir, 0755); err != nil {
 		return nil
 	}
 	w.filename = path.Join(w.dir, kLogFile)
