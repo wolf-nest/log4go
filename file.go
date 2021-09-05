@@ -176,7 +176,7 @@ func (this *FileWriter) putBuffer(buf *bytes.Buffer) {
 }
 
 func (this *FileWriter) Close() error {
-	if atomic.CompareAndSwapInt32(&this.closed, 0, 1) == false {
+	if old := atomic.SwapInt32(&this.closed, 1); old != 0 {
 		this.wg.Wait()
 		return nil
 	}
