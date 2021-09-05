@@ -78,7 +78,7 @@ type File struct {
 }
 
 func CreateFile(filename string) (*File, error) {
-	var f, err = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	var f, err = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func CreateFile(filename string) (*File, error) {
 }
 
 func OpenFile(filename string) (*File, error) {
-	var f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0777)
+	var f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
