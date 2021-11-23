@@ -615,7 +615,7 @@ func Panic(args ...interface{}) {
 
 func Fatalf(format string, args ...interface{}) {
 	sharedLogger.WriteMessage(2, LevelFatal, fmt.Sprintf(format, args...))
-	os.Exit(-1)
+	//os.Exit(-1)
 }
 
 func Fatalln(args ...interface{}) {
